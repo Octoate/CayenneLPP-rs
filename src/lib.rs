@@ -40,6 +40,66 @@ impl<'a> CayenneLPP<'a> {
         }
     }
 
+    fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), ()> {
+        if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_DIGITAL_INPUT;
+        self.buffer[{ self.index += 1; self.index }] = value;
+        self.index += 1;
+
+        Ok(())
+    }
+
+    fn add_digital_output(&mut self, channel: u8, value: u8) -> Result<(), ()> {
+        if self.index + LPP_DIGITAL_OUTPUT_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_DIGITAL_OUTPUT;
+        self.buffer[{ self.index += 1; self.index }] = value;
+        self.index += 1;
+
+        Ok(())
+    }
+
+    fn add_analog_input(&mut self, channel: u8, value: f32) -> Result<(), ()> {
+        if self.index + LPP_ANALOG_INPUT_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        let analog_input: u16 = (value * 100.0) as u16;
+        let analog_input_bytes = analog_input.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_ANALOG_INPUT;
+        self.buffer[{ self.index += 1; self.index }] = analog_input_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = analog_input_bytes[1];
+        self.index += 1;
+
+        Ok(())
+    }
+
+    fn add_analog_output(&mut self, channel: u8, value: f32) -> Result<(), ()> {
+        if self.index + LPP_ANALOG_OUTPUT_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        let analog_output: u16 = (value * 100.0) as u16;
+        let analog_output_bytes = analog_output.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_ANALOG_OUTPUT;
+        self.buffer[{ self.index += 1; self.index }] = analog_output_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = analog_output_bytes[1];
+        self.index += 1;
+
+        Ok(())
+    }
+
     fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), ()> {
         if self.index + LPP_TEMPERATURE_SIZE > self.buffer.len() {
             return Err(());
@@ -63,14 +123,106 @@ mod tests {
     use super::*;
 
     #[test]
-    fn add_temperature() {
+    fn add_digital_input_ok() {
+        let mut buffer: [u8; 2 * LPP_DIGITAL_INPUT_SIZE] = [0; 2 * LPP_DIGITAL_INPUT_SIZE];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_digital_input(3, 0x55).unwrap();
+        lpp.add_digital_input(5, 0xAA).unwrap();
+
+        let expected_bytes: [u8; 6] = [0x03, LPP_DIGITAL_INPUT, 0x55, 0x05, LPP_DIGITAL_INPUT, 0xAA];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_digital_input_overflow() {
+        let mut buffer: [u8; LPP_DIGITAL_INPUT_SIZE + 2] = [0; LPP_DIGITAL_INPUT_SIZE + 2];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_digital_input(3, 0xAA).unwrap();
+        let result = lpp.add_digital_input(5, 0x55);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_analog_input() {
+        let mut buffer: [u8; 2 * LPP_ANALOG_INPUT_SIZE] = [0; 2 * LPP_ANALOG_INPUT_SIZE];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_analog_input(3, 27.2).unwrap();
+        lpp.add_analog_input(5, 25.5).unwrap();
+
+        let expected_bytes: [u8; 8] = [0x03, LPP_ANALOG_INPUT, 0x0A, 0xA0, 0x05, LPP_ANALOG_INPUT, 0x09, 0xF6];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_analog_input_overflow() {
+        let mut buffer: [u8; LPP_ANALOG_INPUT_SIZE + 2] = [0; LPP_ANALOG_INPUT_SIZE + 2];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_analog_input(3, 27.2).unwrap();
+        let result = lpp.add_temperature(5, 25.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_analog_output() {
+        let mut buffer: [u8; 2 * LPP_ANALOG_OUTPUT_SIZE] = [0; 2 * LPP_ANALOG_OUTPUT_SIZE];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_analog_output(3, 27.2).unwrap();
+        lpp.add_analog_output(5, 25.5).unwrap();
+
+        let expected_bytes: [u8; 8] = [0x03, LPP_ANALOG_OUTPUT, 0x0A, 0xA0, 0x05, LPP_ANALOG_OUTPUT, 0x09, 0xF6];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_analog_output_overflow() {
+        let mut buffer: [u8; LPP_ANALOG_OUTPUT_SIZE + 2] = [0; LPP_ANALOG_OUTPUT_SIZE + 2];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_analog_input(3, 27.2).unwrap();
+        let result = lpp.add_temperature(5, 25.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_digital_output_ok() {
+        let mut buffer: [u8; 2 * LPP_DIGITAL_OUTPUT_SIZE] = [0; 2 * LPP_DIGITAL_OUTPUT_SIZE];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_digital_output(3, 0x55).unwrap();
+        lpp.add_digital_output(5, 0xAA).unwrap();
+
+        let expected_bytes: [u8; 6] = [0x03, LPP_DIGITAL_OUTPUT, 0x55, 0x05, LPP_DIGITAL_OUTPUT, 0xAA];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_digital_output_overflow() {
+        let mut buffer: [u8; LPP_DIGITAL_OUTPUT_SIZE + 2] = [0; LPP_DIGITAL_OUTPUT_SIZE + 2];
+        let mut lpp = CayenneLPP::create(&mut buffer);
+
+        lpp.add_digital_output(3, 0xAA).unwrap();
+        let result = lpp.add_digital_output(5, 0x55);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_temperature_ok() {
         let mut buffer: [u8; 2 * LPP_TEMPERATURE_SIZE] = [0; 2 * LPP_TEMPERATURE_SIZE];
         let mut lpp = CayenneLPP::create(&mut buffer);
         
         lpp.add_temperature(3, 27.2).unwrap();
         lpp.add_temperature(5, 25.5).unwrap();
 
-        let expected_bytes: [u8; 8] = [0x03, 0x67, 0x01, 0x10, 0x05, 0x67, 0x00, 0xFF];
+        let expected_bytes: [u8; 8] = [0x03, LPP_TEMPERATURE, 0x01, 0x10, 0x05, LPP_TEMPERATURE, 0x00, 0xFF];
         assert_eq!(expected_bytes, buffer);
     }
 
