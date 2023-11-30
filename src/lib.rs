@@ -41,7 +41,7 @@ impl<'a> CayenneLPP<'a> {
     }
 
     fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), ()> {
-        if self.index >= self.buffer.len() {
+        if self.index + LPP_TEMPERATURE_SIZE > self.buffer.len() {
             return Err(());
         }
 
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn add_temperature_overflow() {
-        let mut buffer: [u8; LPP_TEMPERATURE_SIZE] = [0; LPP_TEMPERATURE_SIZE];
+        let mut buffer: [u8; LPP_TEMPERATURE_SIZE + 2] = [0; LPP_TEMPERATURE_SIZE + 2];
         let mut lpp = CayenneLPP::create(&mut buffer);
         
         lpp.add_temperature(3, 27.2).unwrap();
