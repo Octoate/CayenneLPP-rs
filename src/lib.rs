@@ -40,7 +40,11 @@ impl<'a> CayenneLPP<'a> {
         }
     }
 
-    fn add_temperature(&mut self, channel: u8, celsius: f32) {
+    fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), ()> {
+        if self.index >= self.buffer.len() {
+            return Err(());
+        }
+
         let temperature: u16 = (celsius * 10.0) as u16;
         let temperature_bytes = temperature.to_be_bytes();
 
@@ -49,6 +53,8 @@ impl<'a> CayenneLPP<'a> {
         self.buffer[{ self.index += 1; self.index }] = temperature_bytes[0];
         self.buffer[{ self.index += 1; self.index }] = temperature_bytes[1];
         self.index += 1;
+
+        Ok(())
     }
 }
 
@@ -61,11 +67,21 @@ mod tests {
         let mut buffer: [u8; 2 * LPP_TEMPERATURE_SIZE] = [0; 2 * LPP_TEMPERATURE_SIZE];
         let mut lpp = CayenneLPP::create(&mut buffer);
         
-        lpp.add_temperature(3, 27.2);
-        lpp.add_temperature(5, 25.5);
+        lpp.add_temperature(3, 27.2).unwrap();
+        lpp.add_temperature(5, 25.5).unwrap();
 
         let expected_bytes: [u8; 8] = [0x03, 0x67, 0x01, 0x10, 0x05, 0x67, 0x00, 0xFF];
         assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_temperature_overflow() {
+        let mut buffer: [u8; LPP_TEMPERATURE_SIZE] = [0; LPP_TEMPERATURE_SIZE];
+        let mut lpp = CayenneLPP::create(&mut buffer);
         
+        lpp.add_temperature(3, 27.2).unwrap();
+        let result = lpp.add_temperature(5, 25.5);
+
+        assert_eq!(Err(()), result);
     }
 }
