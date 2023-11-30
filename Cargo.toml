@@ -1,5 +1,5 @@
 [package]
-name = "CayenneLPP-rs"
+name = "cayenne_lpp"
 version = "0.1.0"
 edition = "2021"
 
