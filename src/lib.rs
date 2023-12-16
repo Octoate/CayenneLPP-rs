@@ -485,7 +485,7 @@ mod tests {
     }
 
     #[test]
-    fn ass_gyrometer_overflow() {
+    fn add_gyrometer_overflow() {
         let mut buffer: [u8; LPP_GYROMETER_SIZE + 2] = [0; LPP_GYROMETER_SIZE + 2];
         let mut lpp = CayenneLPP::new(&mut buffer);
 
