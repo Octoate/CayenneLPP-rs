@@ -71,7 +71,7 @@ impl<'a> CayenneLPP<'a> {
             return Err(());
         }
 
-        let analog_input: u16 = (value * 100.0) as u16;
+        let analog_input: i16 = (value * 100.0) as i16;
         let analog_input_bytes = analog_input.to_be_bytes();
 
         self.buffer[self.index] = channel;
@@ -88,7 +88,7 @@ impl<'a> CayenneLPP<'a> {
             return Err(());
         }
 
-        let analog_output: u16 = (value * 100.0) as u16;
+        let analog_output: i16 = (value * 100.0) as i16;
         let analog_output_bytes = analog_output.to_be_bytes();
 
         self.buffer[self.index] = channel;
@@ -105,13 +105,27 @@ impl<'a> CayenneLPP<'a> {
             return Err(());
         }
 
-        let temperature: u16 = (celsius * 10.0) as u16;
+        let temperature: i16 = (celsius * 10.0) as i16;
         let temperature_bytes = temperature.to_be_bytes();
 
         self.buffer[self.index] = channel;
         self.buffer[{ self.index += 1; self.index }] = LPP_TEMPERATURE;
         self.buffer[{ self.index += 1; self.index }] = temperature_bytes[0];
         self.buffer[{ self.index += 1; self.index }] = temperature_bytes[1];
+        self.index += 1;
+
+        Ok(())
+    }
+
+    fn add_luminosity(&mut self, channel: u8, lux: u16) -> Result<(), ()> {
+        if self.index + LPP_LUMINOSITY_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_LUMINOSITY;
+        self.buffer[{ self.index += 1; self.index }] = (lux >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = lux as u8;
         self.index += 1;
 
         Ok(())
@@ -227,12 +241,47 @@ mod tests {
     }
 
     #[test]
+    fn add_temperature_negative_ok() {
+        let mut buffer: [u8; 2 * LPP_TEMPERATURE_SIZE] = [0; 2 * LPP_TEMPERATURE_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_temperature(6, -12.3).unwrap();
+        lpp.add_temperature(2, -35.8).unwrap();
+
+        let expected_bytes: [u8; 8] = [0x06, LPP_TEMPERATURE, 0xFF, 0x85, 0x02, LPP_TEMPERATURE, 0xFE, 0x9A];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
     fn add_temperature_overflow() {
         let mut buffer: [u8; LPP_TEMPERATURE_SIZE + 2] = [0; LPP_TEMPERATURE_SIZE + 2];
         let mut lpp = CayenneLPP::new(&mut buffer);
         
         lpp.add_temperature(3, 27.2).unwrap();
         let result = lpp.add_temperature(5, 25.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_luminosity_ok() {
+        let mut buffer: [u8; 2 * LPP_LUMINOSITY_SIZE] = [0; 2 * LPP_LUMINOSITY_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_luminosity(2, 0xAA55).unwrap();
+        lpp.add_luminosity(9, 0x55AA).unwrap();
+
+        let expected_bytes: [u8; 8] = [0x02, LPP_LUMINOSITY, 0xAA, 0x55, 0x09, LPP_LUMINOSITY, 0x55, 0xAA];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_luminosity_overflow() {
+        let mut buffer: [u8; LPP_LUMINOSITY_SIZE + 2] = [0; LPP_LUMINOSITY_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_luminosity(2, 0x55AA).unwrap();
+        let result = lpp.add_luminosity(5, 0xAA55);
 
         assert_eq!(Err(()), result);
     }
