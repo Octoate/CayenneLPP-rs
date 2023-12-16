@@ -130,6 +130,19 @@ impl<'a> CayenneLPP<'a> {
 
         Ok(())
     }
+
+    fn add_presence(&mut self, channel: u8, value: u8) -> Result<(), ()> {
+        if self.index + LPP_PRESENCE_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_PRESENCE;
+        self.buffer[{ self.index += 1; self.index }] = value;
+        self.index += 1;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -282,6 +295,29 @@ mod tests {
 
         lpp.add_luminosity(2, 0x55AA).unwrap();
         let result = lpp.add_luminosity(5, 0xAA55);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_presence_ok() {
+        let mut buffer: [u8; 2 * LPP_PRESENCE_SIZE] = [0; 2 * LPP_PRESENCE_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_presence(2, 0xAA).unwrap();
+        lpp.add_presence(9, 0x55).unwrap();
+
+        let expected_bytes: [u8; 6] = [0x02, LPP_PRESENCE, 0xAA, 0x09, LPP_PRESENCE, 0x55];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_presence_overflow() {
+        let mut buffer: [u8; LPP_PRESENCE_SIZE + 2] = [0; LPP_PRESENCE_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_presence(2, 0x55).unwrap();
+        let result = lpp.add_presence(5, 0xAA);
 
         assert_eq!(Err(()), result);
     }
