@@ -195,6 +195,29 @@ impl<'a> CayenneLPP<'a> {
 
         Ok(())
     }
+
+    fn add_gyrometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
+        if self.index + LPP_GYROMETER_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        // prepare axis values
+        let vx: u16 = (x * 100.0) as u16;
+        let vy: u16 = (y * 100.0) as u16;
+        let vz: u16 = (z * 100.0) as u16;
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_GYROMETER;
+        self.buffer[{ self.index += 1; self.index }] = (vx >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vx as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vy >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vy as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vz >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vz as u8;
+        self.index += 1;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -442,6 +465,32 @@ mod tests {
 
         lpp.add_barometric_pressure(3, 27.2).unwrap();
         let result = lpp.add_barometric_pressure(5, 25.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_gyrometer_ok() {
+        let mut buffer: [u8; 2 * LPP_GYROMETER_SIZE] = [0; 2 * LPP_GYROMETER_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_gyrometer(6, 12.34, 56.78, 9.0).unwrap();
+        lpp.add_gyrometer(3, 64.27, 31.29, 28.53).unwrap();
+
+        let expected_bytes: [u8; 16] = [
+            0x06, LPP_GYROMETER, 0x04, 0xD2, 0x16, 0x2E, 0x03, 0x84,
+            0x03, LPP_GYROMETER, 0x19, 0x1A, 0x0C, 0x39, 0x0B, 0x25
+        ];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn ass_gyrometer_overflow() {
+        let mut buffer: [u8; LPP_GYROMETER_SIZE + 2] = [0; LPP_GYROMETER_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_gyrometer(3, 27.2, 34.2, 56.1).unwrap();
+        let result = lpp.add_gyrometer(5, 25.5, 98.1, 23.5);
 
         assert_eq!(Err(()), result);
     }
