@@ -179,6 +179,22 @@ impl<'a> CayenneLPP<'a> {
 
         Ok(())
     }
+
+    fn add_barometric_pressure(&mut self, channel: u8, hpa: f32) -> Result<(), ()> {
+        if self.index + LPP_BAROMETRIC_PRESSURE_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        let pressure = (hpa * 10.0) as u16;
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_BAROMETRIC_PRESSURE;
+        self.buffer[{ self.index += 1; self.index }] = (pressure >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = pressure as u8;
+        self.index += 1;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -403,6 +419,29 @@ mod tests {
 
         lpp.add_accelerometer(3, 27.2, 34.2, 56.1).unwrap();
         let result = lpp.add_accelerometer(5, 25.5, 98.1, 23.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_barometric_pressure_ok() {
+        let mut buffer: [u8; 2 * LPP_BAROMETRIC_PRESSURE_SIZE] = [0; 2 * LPP_BAROMETRIC_PRESSURE_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_barometric_pressure(3, 1023.1).unwrap();
+        lpp.add_barometric_pressure(5, 992.3).unwrap();
+
+        let expected_bytes: [u8; 8] = [0x03, LPP_BAROMETRIC_PRESSURE, 0x27, 0xF7, 0x05, LPP_BAROMETRIC_PRESSURE, 0x26, 0xC3];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_barometric_pressure_overflow() {
+        let mut buffer: [u8; LPP_BAROMETRIC_PRESSURE_SIZE + 2] = [0; LPP_BAROMETRIC_PRESSURE_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_barometric_pressure(3, 27.2).unwrap();
+        let result = lpp.add_barometric_pressure(5, 25.5);
 
         assert_eq!(Err(()), result);
     }
