@@ -218,6 +218,32 @@ impl<'a> CayenneLPP<'a> {
 
         Ok(())
     }
+
+    fn add_gps(&mut self, channel: u8, latitude: f32, longitude: f32, meters: f32) -> Result<(), ()> {
+        if self.index + LPP_GPS_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        // prepare GPS values (3 bytes each)
+        let vx: i32 = (latitude * 10000.0) as i32;
+        let vy: i32 = (longitude * 10000.0) as i32;
+        let vz: i32 = (meters * 100.0) as i32;
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_GPS;
+        self.buffer[{ self.index += 1; self.index }] = (vx >> 16) as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vx >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vx as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vy >> 16) as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vy >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vy as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vz >> 16) as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vz >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vz as u8;
+        self.index += 1;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -491,6 +517,32 @@ mod tests {
 
         lpp.add_gyrometer(3, 27.2, 34.2, 56.1).unwrap();
         let result = lpp.add_gyrometer(5, 25.5, 98.1, 23.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_gps_ok() {
+        let mut buffer: [u8; 2 * LPP_GPS_SIZE] = [0; 2 * LPP_GPS_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_gps(1, 42.3518, -87.9094, 10.0).unwrap();
+        lpp.add_gps(3, 52.3123, 13.2456, 87.65).unwrap();
+
+        let expected_bytes: [u8; 22] = [
+            0x01, LPP_GPS, 0x06, 0x76, 0x5E, 0xF2, 0x96, 0x0A, 0x00, 0x03, 0xE8,
+            0x03, LPP_GPS, 0x07, 0xFB, 0x73, 0x02, 0x05, 0x68, 0x00, 0x22, 0x3D
+        ];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn ass_gps_overflow() {
+        let mut buffer: [u8; LPP_GPS_SIZE + 2] = [0; LPP_GPS_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_gps(3, 27.2, 34.2, 56.1).unwrap();
+        let result = lpp.add_gps(5, 25.5, 98.1, 23.5);
 
         assert_eq!(Err(()), result);
     }
