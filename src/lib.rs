@@ -156,6 +156,29 @@ impl<'a> CayenneLPP<'a> {
 
         Ok(())
     }
+
+    fn add_accelerometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
+        if self.index + LPP_ACCELEROMETER_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        // prepare axis values
+        let vx: i16 = (x * 1000.0) as i16;
+        let vy: i16 = (y * 1000.0) as i16;
+        let vz: i16 = (z * 1000.0) as i16;
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_ACCELEROMETER;
+        self.buffer[{ self.index += 1; self.index }] = (vx >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vx as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vy >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vy as u8;
+        self.buffer[{ self.index += 1; self.index }] = (vz >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = vz as u8;
+        self.index += 1;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -354,6 +377,32 @@ mod tests {
 
         lpp.add_relative_humidity(3, 27.2).unwrap();
         let result = lpp.add_relative_humidity(5, 25.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_accelerometer_ok() {
+        let mut buffer: [u8; 2 * LPP_ACCELEROMETER_SIZE] = [0; 2 * LPP_ACCELEROMETER_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_accelerometer(6, 1.234, -1.234, 0.0).unwrap();
+        lpp.add_accelerometer(3, 6.427, 3.129, -2.853).unwrap();
+
+        let expected_bytes: [u8; 16] = [
+            0x06, LPP_ACCELEROMETER, 0x04, 0xD2, 0xFB, 0x2E, 0x00, 0x00,
+            0x03, LPP_ACCELEROMETER, 0x19, 0x1B, 0x0C, 0x39, 0xF4, 0xDB
+        ];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn ass_accelerometer_overflow() {
+        let mut buffer: [u8; LPP_ACCELEROMETER_SIZE + 2] = [0; LPP_ACCELEROMETER_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_accelerometer(3, 27.2, 34.2, 56.1).unwrap();
+        let result = lpp.add_accelerometer(5, 25.5, 98.1, 23.5);
 
         assert_eq!(Err(()), result);
     }
