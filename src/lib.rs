@@ -143,6 +143,19 @@ impl<'a> CayenneLPP<'a> {
 
         Ok(())
     }
+
+    fn add_relative_humidity(&mut self, channel: u8, relative_humidity: f32) -> Result<(), ()> {
+        if self.index + LPP_RELATIVE_HUMIDITY_SIZE > self.buffer.len() {
+            return Err(());
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_RELATIVE_HUMIDITY;
+        self.buffer[{ self.index += 1; self.index }] = (relative_humidity * 2.0) as u8;
+        self.index += 1;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -318,6 +331,29 @@ mod tests {
 
         lpp.add_temperature(3, 27.2).unwrap();
         let result = lpp.add_temperature(5, 25.5);
+
+        assert_eq!(Err(()), result);
+    }
+
+    #[test]
+    fn add_relative_humidity_ok() {
+        let mut buffer: [u8; 2 * LPP_RELATIVE_HUMIDITY_SIZE] = [0; 2 * LPP_RELATIVE_HUMIDITY_SIZE];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_relative_humidity(2, 100.0).unwrap();
+        lpp.add_relative_humidity(3, 65.4).unwrap();
+
+        let expected_bytes: [u8; 6] = [0x02, LPP_RELATIVE_HUMIDITY, 0xC8, 0x03, LPP_RELATIVE_HUMIDITY, 0x82];
+        assert_eq!(expected_bytes, buffer);
+    }
+
+    #[test]
+    fn add_relative_humidity_overflow() {
+        let mut buffer: [u8; LPP_RELATIVE_HUMIDITY_SIZE + 2] = [0; LPP_RELATIVE_HUMIDITY_SIZE + 2];
+        let mut lpp = CayenneLPP::new(&mut buffer);
+
+        lpp.add_relative_humidity(3, 27.2).unwrap();
+        let result = lpp.add_relative_humidity(5, 25.5);
 
         assert_eq!(Err(()), result);
     }
