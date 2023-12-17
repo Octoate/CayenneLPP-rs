@@ -10,6 +10,7 @@ trivial_numeric_casts)]
 //! of the data can be used.
 //!
 //! The original C++ version of [Cayenne LPP] can be found [here].
+//!
 //! [Cayenne LPP]: https://docs.mydevices.com/docs/lorawan/cayenne-lpp
 //! [here]: https://github.com/myDevicesIoT/CayenneLPP
 
