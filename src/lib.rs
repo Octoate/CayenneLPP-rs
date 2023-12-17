@@ -1,30 +1,90 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
+#![forbid(unsafe_code)]
 
+///! This crate is a port of the [Cayenne LPP] (Low Power Payload) API. It provides an easy way to send data over LPWAN
+///! networks such as LoRaWAN. Cayenne LPP is compliant with payload size restrictions, which can be lowered down to
+///! 11 bytes and allows the device to send multiple sensor data at one time.
+///!
+///! Additionally it is also possible to send different sensor data in different frames. To do this, the channel value
+///! of the data can be used.
+///!
+///! The original C++ version of [Cayenne LPP] can be found [here].
+///! [Cayenne LPP]: https://docs.mydevices.com/docs/lorawan/cayenne-lpp
+///! [here]: https://github.com/myDevicesIoT/CayenneLPP
+
+#![deny(missing_docs)]
+
+/// Data type of a digital input
 const LPP_DIGITAL_INPUT: u8 =       0;       // 1 byte
+
+/// Data type of a digital output
 const LPP_DIGITAL_OUTPUT: u8 =      1;       // 1 byte
+
+/// Data type of an analog input
 const LPP_ANALOG_INPUT: u8 =        2;       // 2 bytes, 0.01 signed
+
+/// Data type of an analog output
 const LPP_ANALOG_OUTPUT: u8 =       3;       // 2 bytes, 0.01 signed
+
+/// Data type of a luminosity value
 const LPP_LUMINOSITY: u8 =          101;     // 2 bytes, 1 lux unsigned
+
+// Data type of a presence sensor
 const LPP_PRESENCE: u8 =            102;     // 1 byte, 1
+
+/// Data type of a temperature value
 const LPP_TEMPERATURE: u8 =         103;     // 2 bytes, 0.1°C signed
+
+/// Data type of a relative humidity value
 const LPP_RELATIVE_HUMIDITY: u8 =   104;     // 1 byte, 0.5% unsigned
+
+/// Data type of accelerometer values
 const LPP_ACCELEROMETER: u8 =       113;     // 2 bytes per axis, 0.001G
+
+/// Data type of a barometric pressure value
 const LPP_BAROMETRIC_PRESSURE: u8 = 115;     // 2 bytes 0.1 hPa Unsigned
+
+/// Data type of gyrometer values
 const LPP_GYROMETER: u8 =           134;     // 2 bytes per axis, 0.01 °/s
+
+/// Data type of GPS value
 const LPP_GPS: u8 =                 136;     // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
 
 // Data ID + Data Type + Data Size
+/// Size of a digital input packet including channel and data type
 const LPP_DIGITAL_INPUT_SIZE: usize =       3;       // 1 byte
+
+/// Size of a digital output packet including channel and data type
 const LPP_DIGITAL_OUTPUT_SIZE: usize =      3;       // 1 byte
+
+/// Size of an analog input packet including channel and data type
 const LPP_ANALOG_INPUT_SIZE: usize =        4;       // 2 bytes, 0.01 signed
+
+/// Size of an analog output packet including channel and data type
 const LPP_ANALOG_OUTPUT_SIZE: usize =       4;       // 2 bytes, 0.01 signed
+
+/// Size of a luminosity packet including channel and data type
 const LPP_LUMINOSITY_SIZE: usize =          4;       // 2 bytes, 1 lux unsigned
+
+/// Size of a presence sensor packet including channel and data type
 const LPP_PRESENCE_SIZE: usize =            3;       // 1 byte, 1
+
+/// Size of a temperature packet including channel and data type
 const LPP_TEMPERATURE_SIZE: usize =         4;       // 2 bytes, 0.1°C signed
+
+/// Size of a relative humidity packet including channel and data type
 const LPP_RELATIVE_HUMIDITY_SIZE: usize =   3;       // 1 byte, 0.5% unsigned
+
+/// Size of an accelerometer packet including channel and data type
 const LPP_ACCELEROMETER_SIZE: usize =       8;       // 2 bytes per axis, 0.001G
+
+/// Size of a barometric pressure packet including channel and data type
 const LPP_BAROMETRIC_PRESSURE_SIZE: usize = 4;       // 2 bytes 0.1 hPa Unsigned
+
+/// Size of a gyrometer packet including channel and data type
 const LPP_GYROMETER_SIZE: usize =           8;       // 2 bytes per axis, 0.01 °/s
+
+/// Size of a GPS packet including channel and data type
 const LPP_GPS_SIZE: usize =                 11;      // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
 
 struct CayenneLPP<'a> {
