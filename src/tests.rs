@@ -287,7 +287,7 @@ fn add_gps_ok() {
 }
 
 #[test]
-fn ass_gps_overflow() {
+fn add_gps_overflow() {
     let mut buffer: [u8; LPP_GPS_SIZE + 2] = [0; LPP_GPS_SIZE + 2];
     let mut lpp = CayenneLPP::new(&mut buffer);
 
