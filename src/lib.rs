@@ -31,7 +31,7 @@ pub const LPP_ANALOG_OUTPUT: u8 =       3;       // 2 bytes, 0.01 signed
 /// Data type of a luminosity value
 pub const LPP_LUMINOSITY: u8 =          101;     // 2 bytes, 1 lux unsigned
 
-// Data type of a presence sensor
+/// Data type of a presence sensor
 pub const LPP_PRESENCE: u8 =            102;     // 1 byte, 1
 
 /// Data type of a temperature value
@@ -89,12 +89,21 @@ pub const LPP_GYROMETER_SIZE: usize =           8;       // 2 bytes per axis, 0.
 /// Size of a GPS packet including channel and data type
 pub const LPP_GPS_SIZE: usize =                 11;      // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
 
+/// This struct contains the data of the added payload objects and an index that points to the next free
+/// value in the array. All newly added values will increase the index. After adding all the values, the buffer
+/// contains the payloads of the different data types and has a length of ''index''.
 pub struct CayenneLPP<'a> {
     buffer: &'a mut [u8],
     index: usize
 }
 
 impl<'a> CayenneLPP<'a> {
+
+    /// Creates a new buffer for the Cayenne LPP. Since the library works without a memory allocator, it is necessary
+    /// to provide it with an array that equals the length or is bigger then the data that shall be added to it.
+    ///
+    /// It is possible to use the size constants for the data types (e.g. LPP_TEMPERATURE_SIZE), to exactly calculate
+    /// the size of the needed array.
     pub fn new(buffer: &'a mut [u8]) -> Self {
         CayenneLPP {
             buffer,
@@ -102,6 +111,7 @@ impl<'a> CayenneLPP<'a> {
         }
     }
 
+    /// Adds the payload for a digital input to the Cayenne LPP data structure.
     pub fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
             return Err(());
@@ -115,6 +125,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for a digital output to the Cayenne LPP data structure.
     pub fn add_digital_output(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_DIGITAL_OUTPUT_SIZE > self.buffer.len() {
             return Err(());
@@ -128,6 +139,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for an analog input to the Cayenne LPP data structure.
     pub fn add_analog_input(&mut self, channel: u8, value: f32) -> Result<(), ()> {
         if self.index + LPP_ANALOG_INPUT_SIZE > self.buffer.len() {
             return Err(());
@@ -145,6 +157,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for an analog output to the Cayenne LPP data structure.
     pub fn add_analog_output(&mut self, channel: u8, value: f32) -> Result<(), ()> {
         if self.index + LPP_ANALOG_OUTPUT_SIZE > self.buffer.len() {
             return Err(());
@@ -162,6 +175,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for luminosity to the Cayenne LPP data structure. The value should be provided in lux.
     pub fn add_luminosity(&mut self, channel: u8, lux: u16) -> Result<(), ()> {
         if self.index + LPP_LUMINOSITY_SIZE > self.buffer.len() {
             return Err(());
@@ -176,6 +190,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for a presence sensor to the Cayenne LPP data structure.
     pub fn add_presence(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_PRESENCE_SIZE > self.buffer.len() {
             return Err(());
@@ -189,6 +204,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for temperature to the Cayenne LPP data structure.
     pub fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), ()> {
         if self.index + LPP_TEMPERATURE_SIZE > self.buffer.len() {
             return Err(());
@@ -206,6 +222,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for relative humidity to the Cayenne LPP data structure.
     pub fn add_relative_humidity(&mut self, channel: u8, relative_humidity: f32) -> Result<(), ()> {
         if self.index + LPP_RELATIVE_HUMIDITY_SIZE > self.buffer.len() {
             return Err(());
@@ -219,6 +236,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload of an accelerometer to the Cayenne LPP data structure.
     pub fn add_accelerometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
         if self.index + LPP_ACCELEROMETER_SIZE > self.buffer.len() {
             return Err(());
@@ -242,6 +260,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for barometric pressure to the Cayenne LPP data structure.
     pub fn add_barometric_pressure(&mut self, channel: u8, hpa: f32) -> Result<(), ()> {
         if self.index + LPP_BAROMETRIC_PRESSURE_SIZE > self.buffer.len() {
             return Err(());
@@ -258,6 +277,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for a gyrometer to the Cayenne LPP data structure.
     pub fn add_gyrometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
         if self.index + LPP_GYROMETER_SIZE > self.buffer.len() {
             return Err(());
@@ -281,6 +301,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for GPS to the Cayenne LPP data structure.
     pub fn add_gps(&mut self, channel: u8, latitude: f32, longitude: f32, meters: f32) -> Result<(), ()> {
         if self.index + LPP_GPS_SIZE > self.buffer.len() {
             return Err(());
