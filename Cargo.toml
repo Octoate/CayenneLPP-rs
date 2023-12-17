@@ -1,7 +1,7 @@
 [package]
 name = "cayenne_lpp"
 description = ""
-authors = "octoate"
+authors = ["octoate"]
 repository = "https://github.com/Octoate/CayenneLPP-rs"
 keywords = ["no-std", "cayenne", "lpp", "lpwan", "lorawan"]
 license = "MIT"
