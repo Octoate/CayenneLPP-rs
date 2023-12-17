@@ -1,3 +1,7 @@
+#![no_std]
+#![deny(missing_docs, unsafe_code, unstable_features, unused_import_braces, unused_qualifications, trivial_casts,
+trivial_numeric_casts)]
+
 //! This crate is a port of the [Cayenne LPP] (Low Power Payload) API. It provides an easy way to send data over LPWAN
 //! networks such as LoRaWAN. Cayenne LPP is compliant with payload size restrictions, which can be lowered down to
 //! 11 bytes and allows the device to send multiple sensor data at one time.
@@ -8,100 +12,97 @@
 //! The original C++ version of [Cayenne LPP] can be found [here].
 //! [Cayenne LPP]: https://docs.mydevices.com/docs/lorawan/cayenne-lpp
 //! [here]: https://github.com/myDevicesIoT/CayenneLPP
-#![no_std]
-#![deny(missing_docs, unsafe_code, unstable_features, unused_import_braces, unused_qualifications, trivial_casts,
-    trivial_numeric_casts)]
 
 #[cfg(test)]
 mod tests;
 
 /// Data type of a digital input
-const LPP_DIGITAL_INPUT: u8 =       0;       // 1 byte
+pub const LPP_DIGITAL_INPUT: u8 =       0;       // 1 byte
 
 /// Data type of a digital output
-const LPP_DIGITAL_OUTPUT: u8 =      1;       // 1 byte
+pub const LPP_DIGITAL_OUTPUT: u8 =      1;       // 1 byte
 
 /// Data type of an analog input
-const LPP_ANALOG_INPUT: u8 =        2;       // 2 bytes, 0.01 signed
+pub const LPP_ANALOG_INPUT: u8 =        2;       // 2 bytes, 0.01 signed
 
 /// Data type of an analog output
-const LPP_ANALOG_OUTPUT: u8 =       3;       // 2 bytes, 0.01 signed
+pub const LPP_ANALOG_OUTPUT: u8 =       3;       // 2 bytes, 0.01 signed
 
 /// Data type of a luminosity value
-const LPP_LUMINOSITY: u8 =          101;     // 2 bytes, 1 lux unsigned
+pub const LPP_LUMINOSITY: u8 =          101;     // 2 bytes, 1 lux unsigned
 
 // Data type of a presence sensor
-const LPP_PRESENCE: u8 =            102;     // 1 byte, 1
+pub const LPP_PRESENCE: u8 =            102;     // 1 byte, 1
 
 /// Data type of a temperature value
-const LPP_TEMPERATURE: u8 =         103;     // 2 bytes, 0.1°C signed
+pub const LPP_TEMPERATURE: u8 =         103;     // 2 bytes, 0.1°C signed
 
 /// Data type of a relative humidity value
-const LPP_RELATIVE_HUMIDITY: u8 =   104;     // 1 byte, 0.5% unsigned
+pub const LPP_RELATIVE_HUMIDITY: u8 =   104;     // 1 byte, 0.5% unsigned
 
 /// Data type of accelerometer values
-const LPP_ACCELEROMETER: u8 =       113;     // 2 bytes per axis, 0.001G
+pub const LPP_ACCELEROMETER: u8 =       113;     // 2 bytes per axis, 0.001G
 
 /// Data type of a barometric pressure value
-const LPP_BAROMETRIC_PRESSURE: u8 = 115;     // 2 bytes 0.1 hPa Unsigned
+pub const LPP_BAROMETRIC_PRESSURE: u8 = 115;     // 2 bytes 0.1 hPa Unsigned
 
 /// Data type of gyrometer values
-const LPP_GYROMETER: u8 =           134;     // 2 bytes per axis, 0.01 °/s
+pub const LPP_GYROMETER: u8 =           134;     // 2 bytes per axis, 0.01 °/s
 
 /// Data type of GPS value
-const LPP_GPS: u8 =                 136;     // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
+pub const LPP_GPS: u8 =                 136;     // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
 
 // Data ID + Data Type + Data Size
 /// Size of a digital input packet including channel and data type
-const LPP_DIGITAL_INPUT_SIZE: usize =       3;       // 1 byte
+pub const LPP_DIGITAL_INPUT_SIZE: usize =       3;       // 1 byte
 
 /// Size of a digital output packet including channel and data type
-const LPP_DIGITAL_OUTPUT_SIZE: usize =      3;       // 1 byte
+pub const LPP_DIGITAL_OUTPUT_SIZE: usize =      3;       // 1 byte
 
 /// Size of an analog input packet including channel and data type
-const LPP_ANALOG_INPUT_SIZE: usize =        4;       // 2 bytes, 0.01 signed
+pub const LPP_ANALOG_INPUT_SIZE: usize =        4;       // 2 bytes, 0.01 signed
 
 /// Size of an analog output packet including channel and data type
-const LPP_ANALOG_OUTPUT_SIZE: usize =       4;       // 2 bytes, 0.01 signed
+pub const LPP_ANALOG_OUTPUT_SIZE: usize =       4;       // 2 bytes, 0.01 signed
 
 /// Size of a luminosity packet including channel and data type
-const LPP_LUMINOSITY_SIZE: usize =          4;       // 2 bytes, 1 lux unsigned
+pub const LPP_LUMINOSITY_SIZE: usize =          4;       // 2 bytes, 1 lux unsigned
 
 /// Size of a presence sensor packet including channel and data type
-const LPP_PRESENCE_SIZE: usize =            3;       // 1 byte, 1
+pub const LPP_PRESENCE_SIZE: usize =            3;       // 1 byte, 1
 
 /// Size of a temperature packet including channel and data type
-const LPP_TEMPERATURE_SIZE: usize =         4;       // 2 bytes, 0.1°C signed
+pub const LPP_TEMPERATURE_SIZE: usize =         4;       // 2 bytes, 0.1°C signed
 
 /// Size of a relative humidity packet including channel and data type
-const LPP_RELATIVE_HUMIDITY_SIZE: usize =   3;       // 1 byte, 0.5% unsigned
+pub const LPP_RELATIVE_HUMIDITY_SIZE: usize =   3;       // 1 byte, 0.5% unsigned
 
 /// Size of an accelerometer packet including channel and data type
-const LPP_ACCELEROMETER_SIZE: usize =       8;       // 2 bytes per axis, 0.001G
+pub const LPP_ACCELEROMETER_SIZE: usize =       8;       // 2 bytes per axis, 0.001G
 
 /// Size of a barometric pressure packet including channel and data type
-const LPP_BAROMETRIC_PRESSURE_SIZE: usize = 4;       // 2 bytes 0.1 hPa Unsigned
+pub const LPP_BAROMETRIC_PRESSURE_SIZE: usize = 4;       // 2 bytes 0.1 hPa Unsigned
 
 /// Size of a gyrometer packet including channel and data type
-const LPP_GYROMETER_SIZE: usize =           8;       // 2 bytes per axis, 0.01 °/s
+pub const LPP_GYROMETER_SIZE: usize =           8;       // 2 bytes per axis, 0.01 °/s
 
 /// Size of a GPS packet including channel and data type
-const LPP_GPS_SIZE: usize =                 11;      // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
+pub const LPP_GPS_SIZE: usize =                 11;      // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
 
-struct CayenneLPP<'a> {
+pub struct CayenneLPP<'a> {
     buffer: &'a mut [u8],
     index: usize
 }
 
 impl<'a> CayenneLPP<'a> {
-    fn new(buffer: &'a mut [u8]) -> Self {
+    pub fn new(buffer: &'a mut [u8]) -> Self {
         CayenneLPP {
             buffer,
             index: 0
         }
     }
 
-    fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), ()> {
+    pub fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -114,7 +115,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_digital_output(&mut self, channel: u8, value: u8) -> Result<(), ()> {
+    pub fn add_digital_output(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_DIGITAL_OUTPUT_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -127,7 +128,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_analog_input(&mut self, channel: u8, value: f32) -> Result<(), ()> {
+    pub fn add_analog_input(&mut self, channel: u8, value: f32) -> Result<(), ()> {
         if self.index + LPP_ANALOG_INPUT_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -144,7 +145,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_analog_output(&mut self, channel: u8, value: f32) -> Result<(), ()> {
+    pub fn add_analog_output(&mut self, channel: u8, value: f32) -> Result<(), ()> {
         if self.index + LPP_ANALOG_OUTPUT_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -161,7 +162,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_luminosity(&mut self, channel: u8, lux: u16) -> Result<(), ()> {
+    pub fn add_luminosity(&mut self, channel: u8, lux: u16) -> Result<(), ()> {
         if self.index + LPP_LUMINOSITY_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -175,7 +176,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_presence(&mut self, channel: u8, value: u8) -> Result<(), ()> {
+    pub fn add_presence(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_PRESENCE_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -188,7 +189,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), ()> {
+    pub fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), ()> {
         if self.index + LPP_TEMPERATURE_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -205,7 +206,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_relative_humidity(&mut self, channel: u8, relative_humidity: f32) -> Result<(), ()> {
+    pub fn add_relative_humidity(&mut self, channel: u8, relative_humidity: f32) -> Result<(), ()> {
         if self.index + LPP_RELATIVE_HUMIDITY_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -218,7 +219,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_accelerometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
+    pub fn add_accelerometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
         if self.index + LPP_ACCELEROMETER_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -241,7 +242,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_barometric_pressure(&mut self, channel: u8, hpa: f32) -> Result<(), ()> {
+    pub fn add_barometric_pressure(&mut self, channel: u8, hpa: f32) -> Result<(), ()> {
         if self.index + LPP_BAROMETRIC_PRESSURE_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -257,7 +258,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_gyrometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
+    pub fn add_gyrometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), ()> {
         if self.index + LPP_GYROMETER_SIZE > self.buffer.len() {
             return Err(());
         }
@@ -280,7 +281,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    fn add_gps(&mut self, channel: u8, latitude: f32, longitude: f32, meters: f32) -> Result<(), ()> {
+    pub fn add_gps(&mut self, channel: u8, latitude: f32, longitude: f32, meters: f32) -> Result<(), ()> {
         if self.index + LPP_GPS_SIZE > self.buffer.len() {
             return Err(());
         }
