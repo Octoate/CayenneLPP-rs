@@ -3,8 +3,10 @@ name = "cayenne_lpp"
 description = ""
 authors = ["octoate"]
 repository = "https://github.com/Octoate/CayenneLPP-rs"
+documentation = ""
 keywords = ["no-std", "cayenne", "lpp", "lpwan", "lorawan"]
 license = "MIT"
+readme = "README.md"
 version = "0.1.0"
 edition = "2021"
 
