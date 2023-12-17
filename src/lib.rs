@@ -1,18 +1,16 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-#![forbid(unsafe_code)]
-
-///! This crate is a port of the [Cayenne LPP] (Low Power Payload) API. It provides an easy way to send data over LPWAN
-///! networks such as LoRaWAN. Cayenne LPP is compliant with payload size restrictions, which can be lowered down to
-///! 11 bytes and allows the device to send multiple sensor data at one time.
-///!
-///! Additionally it is also possible to send different sensor data in different frames. To do this, the channel value
-///! of the data can be used.
-///!
-///! The original C++ version of [Cayenne LPP] can be found [here].
-///! [Cayenne LPP]: https://docs.mydevices.com/docs/lorawan/cayenne-lpp
-///! [here]: https://github.com/myDevicesIoT/CayenneLPP
-
-// #![deny(missing_docs)]
+//! This crate is a port of the [Cayenne LPP] (Low Power Payload) API. It provides an easy way to send data over LPWAN
+//! networks such as LoRaWAN. Cayenne LPP is compliant with payload size restrictions, which can be lowered down to
+//! 11 bytes and allows the device to send multiple sensor data at one time.
+//!
+//! Additionally it is also possible to send different sensor data in different frames. To do this, the channel value
+//! of the data can be used.
+//!
+//! The original C++ version of [Cayenne LPP] can be found [here].
+//! [Cayenne LPP]: https://docs.mydevices.com/docs/lorawan/cayenne-lpp
+//! [here]: https://github.com/myDevicesIoT/CayenneLPP
+#![no_std]
+#![deny(missing_docs, unsafe_code, unstable_features, unused_import_braces, unused_qualifications, trivial_casts,
+    trivial_numeric_casts)]
 
 #[cfg(test)]
 mod tests;
