@@ -112,6 +112,13 @@ impl<'a> CayenneLPP<'a> {
         }
     }
 
+    /// Resets the index that is pointing into the buffer, so it is possible to reuse the buffer and add new payloads
+    /// to it.
+    /// Remark: the buffer is not cleared by this operation.
+    pub fn reset(&mut self) {
+        self.index = 0;
+    }
+
     /// Adds the payload for a digital input to the Cayenne LPP data structure.
     pub fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
