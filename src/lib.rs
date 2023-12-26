@@ -119,6 +119,11 @@ impl<'a> CayenneLPP<'a> {
         self.index = 0;
     }
 
+    /// Returns the slice of the buffer that contains the payload of the added data types.
+    pub fn payload_slice(&self) -> &[u8] {
+        &self.buffer[0..self.index]
+    }
+
     /// Adds the payload for a digital input to the Cayenne LPP data structure.
     pub fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), ()> {
         if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
