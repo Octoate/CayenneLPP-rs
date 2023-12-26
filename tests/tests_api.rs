@@ -2,14 +2,20 @@ use cayenne_lpp::*;
 
 #[test]
 fn test_all_possible_payloads() {
-    // prepare an array that will exactly fit the whole payload
+    // prepare an array that will fit the whole payload and
+    // use a bigger buffer, to check whether the payload slice is correct
+    const ADDITIONAL_BYTES: usize = 2;
     let mut buffer: [u8; LPP_DIGITAL_INPUT_SIZE + LPP_DIGITAL_OUTPUT_SIZE + LPP_ANALOG_INPUT_SIZE +
         LPP_ANALOG_OUTPUT_SIZE + LPP_LUMINOSITY_SIZE + LPP_PRESENCE_SIZE + LPP_TEMPERATURE_SIZE +
         LPP_RELATIVE_HUMIDITY_SIZE + LPP_ACCELEROMETER_SIZE + LPP_BAROMETRIC_PRESSURE_SIZE +
-        LPP_GYROMETER_SIZE + LPP_GPS_SIZE] = [0; LPP_DIGITAL_INPUT_SIZE + LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_GYROMETER_SIZE + LPP_GPS_SIZE +
+        ADDITIONAL_BYTES
+    ] = [0; LPP_DIGITAL_INPUT_SIZE + LPP_DIGITAL_OUTPUT_SIZE +
         LPP_ANALOG_INPUT_SIZE + LPP_ANALOG_OUTPUT_SIZE + LPP_LUMINOSITY_SIZE + LPP_PRESENCE_SIZE +
         LPP_TEMPERATURE_SIZE + LPP_RELATIVE_HUMIDITY_SIZE + LPP_ACCELEROMETER_SIZE +
-        LPP_BAROMETRIC_PRESSURE_SIZE + LPP_GYROMETER_SIZE + LPP_GPS_SIZE];
+        LPP_BAROMETRIC_PRESSURE_SIZE + LPP_GYROMETER_SIZE + LPP_GPS_SIZE +
+        ADDITIONAL_BYTES
+    ];
     let mut lpp = CayenneLPP::new(&mut buffer);
 
     // add payload for all different values (let's use the same values as in the unit tests for easier testing)
@@ -41,6 +47,8 @@ fn test_all_possible_payloads() {
         0x06, LPP_GYROMETER, 0x04, 0xD2, 0x16, 0x2E, 0x03, 0x84,
         0x01, LPP_GPS, 0x06, 0x76, 0x5E, 0xF2, 0x96, 0x0A, 0x00, 0x03, 0xE8
     ];
+
     // ...and compare them
-    assert_eq!(expected_bytes, buffer);
+    let buffer_slice = lpp.payload_slice();
+    assert_eq!(expected_bytes, buffer_slice);
 }
