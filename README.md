@@ -10,7 +10,7 @@ This crate is a port of the [Cayenne Low Power Payload (LPP)](https://docs.mydev
 to the Rust programming language. It provides an easy way to send data over LPWAN networks such as LoRaWAN. Cayenne LPP
 is compliant with payload size restrictions, which can be lowered down to 11 bytes and allows the device to send
 multiple sensor data at one time. Its focus lies on embedded systems, so it uses the "no_std" attribute to only link the
-core-crate instead of the std-crate.
+core-crate instead of the std-crate. It also does not depend on any other crates.
 
 Additionally, it is also possible to send different sensor data in different frames. To do this, the channel value
 of the data can be used.
