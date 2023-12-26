@@ -1,6 +1,32 @@
 use super::*;
 
 #[test]
+fn reset_ok() {
+    let mut buffer: [u8; LPP_DIGITAL_INPUT_SIZE] = [0; LPP_DIGITAL_INPUT_SIZE];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_digital_input(3, 0x55).unwrap();
+
+    // check slice length (1 digital input)
+    let slice_length = lpp.payload_slice().len();
+    assert_eq!(3, slice_length);
+
+    // call reset
+    lpp.reset();
+
+    // verify that the slice is empty, now
+    let slice_length = lpp.payload_slice().len();
+    assert_eq!(0, slice_length);
+
+    // just to be sure, check that adding still works
+    lpp.add_digital_input(5, 0xAA).unwrap();
+
+    // check slice length (1 digital input)
+    let slice_length = lpp.payload_slice().len();
+    assert_eq!(3, slice_length);
+}
+
+#[test]
 fn add_digital_input_ok() {
     let mut buffer: [u8; 2 * LPP_DIGITAL_INPUT_SIZE] = [0; 2 * LPP_DIGITAL_INPUT_SIZE];
     let mut lpp = CayenneLPP::new(&mut buffer);
