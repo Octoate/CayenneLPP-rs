@@ -3,7 +3,6 @@ name = "cayenne_lpp"
 description = "Rust crate that implements the Cayenne Low Power Payload (LPP) format"
 authors = ["octoate"]
 repository = "https://github.com/Octoate/CayenneLPP-rs"
-documentation = ""
 keywords = ["no-std", "cayenne", "lpp", "lpwan", "lorawan"]
 license = "MIT"
 readme = "README.md"
