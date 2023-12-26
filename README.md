@@ -1,5 +1,11 @@
 # Cayenne Low Power Payload for Rust
 
+
+[![build](https://github.com/Octoate/CayenneLPP-rs/actions/workflows/build.yml/badge.svg)](https://github.com/octoate/CayenneLPP-rs/actions)
+![crates.io](https://img.shields.io/crates/v/cayenne_lpp)
+![docs.rs](https://img.shields.io/docsrs/cayenne_lpp)
+![license](https://img.shields.io/crates/l/cayenne_lpp.svg)
+
 This crate is a port of the [Cayenne Low Power Payload (LPP)](https://docs.mydevices.com/docs/lorawan/cayenne-lpp) API
 to the Rust programming language. It provides an easy way to send data over LPWAN networks such as LoRaWAN. Cayenne LPP
 is compliant with payload size restrictions, which can be lowered down to 11 bytes and allows the device to send
