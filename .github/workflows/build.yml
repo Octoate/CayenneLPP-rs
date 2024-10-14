@@ -35,6 +35,3 @@ jobs:
       run: |
         cargo check
         cargo test --all --verbose
-
-    - name: Rust Codecov
-      uses: maboesanman/rust-codecov@v0
