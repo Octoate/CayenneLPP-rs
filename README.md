@@ -2,6 +2,7 @@
 
 
 [![build](https://github.com/Octoate/CayenneLPP-rs/actions/workflows/build.yml/badge.svg)](https://github.com/octoate/CayenneLPP-rs/actions)
+[![codecov](https://codecov.io/github/Octoate/CayenneLPP-rs/graph/badge.svg?token=F58DRE5E0D)](https://codecov.io/github/Octoate/CayenneLPP-rs)
 ![crates.io](https://img.shields.io/crates/v/cayenne_lpp)
 ![docs.rs](https://img.shields.io/docsrs/cayenne_lpp)
 ![license](https://img.shields.io/crates/l/cayenne_lpp.svg)
