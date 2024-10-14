@@ -20,11 +20,7 @@ jobs:
       with:
         toolchain: nightly
         override: true
-
-    - name: Update local toolchain
-      run: |
-        rustup update
-        rustup component add clippy
+        components: clippy
 
     - name: Toolchain info
       run: |
