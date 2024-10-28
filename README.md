@@ -68,8 +68,8 @@ fn main() {
 
 ## Future development
 
-The API in its current state should be pretty stable to use, but it might be extended for a more detailed error response
-when adding new values to the data structure in the future.  
+The API in its current state should be pretty stable to use. Currently it only supports ```no_std```, but it would be
+possible to support an easier to use API for ```std``` as well.  
 However, if you have any remarks or want to add some functionality feel free to start a discussion or send a PR, but do
 not forget to add unit tests and / or integration tests, if you want that it gets merged into the repo.
 
