@@ -46,7 +46,7 @@ fn add_digital_input_overflow() {
     lpp.add_digital_input(3, 0xAA).unwrap();
     let result = lpp.add_digital_input(5, 0x55);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn add_analog_input_overflow() {
     lpp.add_analog_input(3, 27.2).unwrap();
     let result = lpp.add_temperature(5, 25.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn add_analog_output_overflow() {
     lpp.add_analog_input(3, 27.2).unwrap();
     let result = lpp.add_temperature(5, 25.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -115,7 +115,7 @@ fn add_digital_output_overflow() {
     lpp.add_digital_output(3, 0xAA).unwrap();
     let result = lpp.add_digital_output(5, 0x55);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -138,7 +138,7 @@ fn add_luminosity_overflow() {
     lpp.add_luminosity(2, 0x55AA).unwrap();
     let result = lpp.add_luminosity(5, 0xAA55);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -161,7 +161,7 @@ fn add_presence_overflow() {
     lpp.add_presence(2, 0x55).unwrap();
     let result = lpp.add_presence(5, 0xAA);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -196,7 +196,7 @@ fn add_temperature_overflow() {
     lpp.add_temperature(3, 27.2).unwrap();
     let result = lpp.add_temperature(5, 25.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -219,7 +219,7 @@ fn add_relative_humidity_overflow() {
     lpp.add_relative_humidity(3, 27.2).unwrap();
     let result = lpp.add_relative_humidity(5, 25.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -245,7 +245,7 @@ fn ass_accelerometer_overflow() {
     lpp.add_accelerometer(3, 27.2, 34.2, 56.1).unwrap();
     let result = lpp.add_accelerometer(5, 25.5, 98.1, 23.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -268,7 +268,7 @@ fn add_barometric_pressure_overflow() {
     lpp.add_barometric_pressure(3, 27.2).unwrap();
     let result = lpp.add_barometric_pressure(5, 25.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -294,7 +294,7 @@ fn add_gyrometer_overflow() {
     lpp.add_gyrometer(3, 27.2, 34.2, 56.1).unwrap();
     let result = lpp.add_gyrometer(5, 25.5, 98.1, 23.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
 
 #[test]
@@ -320,5 +320,5 @@ fn add_gps_overflow() {
     lpp.add_gps(3, 27.2, 34.2, 56.1).unwrap();
     let result = lpp.add_gps(5, 25.5, 98.1, 23.5);
 
-    assert_eq!(Err(()), result);
+    assert_eq!(Err(Error::NotEnoughMemory), result);
 }
