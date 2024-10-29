@@ -102,7 +102,7 @@ pub struct CayenneLPP<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     /// The buffer is too small to add the value
-    NotEnoughMemory
+    InsufficientMemory
 }
 
 impl<'a> CayenneLPP<'a> {
@@ -134,7 +134,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for a digital input to the Cayenne LPP data structure.
     pub fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), Error> {
         if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
@@ -148,7 +148,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for a digital output to the Cayenne LPP data structure.
     pub fn add_digital_output(&mut self, channel: u8, value: u8) -> Result<(), Error> {
         if self.index + LPP_DIGITAL_OUTPUT_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
@@ -162,7 +162,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for an analog input to the Cayenne LPP data structure.
     pub fn add_analog_input(&mut self, channel: u8, value: f32) -> Result<(), Error> {
         if self.index + LPP_ANALOG_INPUT_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         let analog_input: i16 = (value * 100.0) as i16;
@@ -180,7 +180,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for an analog output to the Cayenne LPP data structure.
     pub fn add_analog_output(&mut self, channel: u8, value: f32) -> Result<(), Error> {
         if self.index + LPP_ANALOG_OUTPUT_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         let analog_output: i16 = (value * 100.0) as i16;
@@ -198,7 +198,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for luminosity to the Cayenne LPP data structure. The value should be provided in lux.
     pub fn add_luminosity(&mut self, channel: u8, lux: u16) -> Result<(), Error> {
         if self.index + LPP_LUMINOSITY_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
@@ -213,7 +213,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for a presence sensor to the Cayenne LPP data structure.
     pub fn add_presence(&mut self, channel: u8, value: u8) -> Result<(), Error> {
         if self.index + LPP_PRESENCE_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
@@ -227,7 +227,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for temperature to the Cayenne LPP data structure.
     pub fn add_temperature(&mut self, channel: u8, celsius: f32) -> Result<(), Error> {
         if self.index + LPP_TEMPERATURE_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         let temperature: i16 = (celsius * 10.0) as i16;
@@ -245,7 +245,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for relative humidity to the Cayenne LPP data structure.
     pub fn add_relative_humidity(&mut self, channel: u8, relative_humidity: f32) -> Result<(), Error> {
         if self.index + LPP_RELATIVE_HUMIDITY_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
@@ -259,7 +259,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload of an accelerometer to the Cayenne LPP data structure.
     pub fn add_accelerometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), Error> {
         if self.index + LPP_ACCELEROMETER_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         // prepare axis values
@@ -283,7 +283,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for barometric pressure to the Cayenne LPP data structure.
     pub fn add_barometric_pressure(&mut self, channel: u8, hpa: f32) -> Result<(), Error> {
         if self.index + LPP_BAROMETRIC_PRESSURE_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         let pressure = (hpa * 10.0) as u16;
@@ -300,7 +300,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for a gyrometer to the Cayenne LPP data structure.
     pub fn add_gyrometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), Error> {
         if self.index + LPP_GYROMETER_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         // prepare axis values
@@ -324,7 +324,7 @@ impl<'a> CayenneLPP<'a> {
     /// Adds the payload for GPS to the Cayenne LPP data structure.
     pub fn add_gps(&mut self, channel: u8, latitude: f32, longitude: f32, meters: f32) -> Result<(), Error> {
         if self.index + LPP_GPS_SIZE > self.buffer.len() {
-            return Err(Error::NotEnoughMemory);
+            return Err(Error::InsufficientMemory);
         }
 
         // prepare GPS values (3 bytes each)
