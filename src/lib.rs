@@ -29,6 +29,9 @@ pub const LPP_ANALOG_INPUT: u8 =        2;       // 2 bytes, 0.01 signed
 /// Data type of an analog output
 pub const LPP_ANALOG_OUTPUT: u8 =       3;       // 2 bytes, 0.01 signed
 
+/// Data type of a generic sensor
+pub const LPP_GENERIC_SENSOR: u8 =      100;     // 4 bytes, unsigned
+
 /// Data type of a luminosity value
 pub const LPP_LUMINOSITY: u8 =          101;     // 2 bytes, 1 lux unsigned
 
@@ -47,11 +50,50 @@ pub const LPP_ACCELEROMETER: u8 =       113;     // 2 bytes per axis, 0.001G
 /// Data type of a barometric pressure value
 pub const LPP_BAROMETRIC_PRESSURE: u8 = 115;     // 2 bytes 0.1 hPa Unsigned
 
+/// Data type of a voltage value
+pub const LPP_VOLTAGE: u8 =             116;     // 2 bytes 0.01V unsigned
+
+/// Data type of a current value
+pub const LPP_CURRENT: u8 =             117;     // 2 bytes 1mA unsigned
+
+/// Data type of a frequency value
+pub const LPP_FREQUENCY: u8 =           118;     // 4 bytes 1hz unsigned
+
+/// Data type of a percentage
+pub const LPP_PERCRENTAGE: u8 =         120;     // 1 byte 1-100% unsigned
+
+/// Data type of an altitude
+pub const LPP_ALTITUDE: u8 =            121;     // 2 byte 1m signed
+
+/// Data type of a concentration
+pub const LPP_CONCENTRATION: u8 =       125;     // 2 bytes, 1ppm unsigned
+
+/// Data type of a power value
+pub const LPP_POWER: u8 =               128;     // 2 bytes 1W unsigned
+
+/// Data type of a distance value
+pub const LPP_DISTANCE: u8 =            130;     // 4 bytes, 0.001m unsigned
+
+/// Data type of an energy value
+pub const LPP_ENERGY: u8 =              131;     // 4 bytes, 1Wh, unsigned
+
+/// Data type of a direction value
+pub const LPP_DIRECTION: u8 =           132;     // 2 bytes, 1 deg, unsigned
+
+/// Data type of a time (unix timestamp)
+pub const LPP_UNIXTIME: u8 =            133;     // 4 bytes, unsigned
+
 /// Data type of gyrometer values
 pub const LPP_GYROMETER: u8 =           134;     // 2 bytes per axis, 0.01 °/s
 
+/// Data type of a color value
+pub const LPP_COLOR: u8 =               135;     // 1 byte per RGB color
+
 /// Data type of GPS value
 pub const LPP_GPS: u8 =                 136;     // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
+
+/// Data type of a switch value
+pub const LPP_SWITCH: u8 =              142;     // 1 byte 0/1
 
 // Data ID + Data Type + Data Size
 /// Size of a digital input packet including channel and data type
@@ -65,6 +107,9 @@ pub const LPP_ANALOG_INPUT_SIZE: usize =        4;       // 2 bytes, 0.01 signed
 
 /// Size of an analog output packet including channel and data type
 pub const LPP_ANALOG_OUTPUT_SIZE: usize =       4;       // 2 bytes, 0.01 signed
+
+/// Size of a generic sensor packet including channel and data type
+pub const LPP_GENERIC_SENSOR_SIZE: usize =      6;       // 4 bytes, unsigned
 
 /// Size of a luminosity packet including channel and data type
 pub const LPP_LUMINOSITY_SIZE: usize =          4;       // 2 bytes, 1 lux unsigned
@@ -82,13 +127,52 @@ pub const LPP_RELATIVE_HUMIDITY_SIZE: usize =   3;       // 1 byte, 0.5% unsigne
 pub const LPP_ACCELEROMETER_SIZE: usize =       8;       // 2 bytes per axis, 0.001G
 
 /// Size of a barometric pressure packet including channel and data type
-pub const LPP_BAROMETRIC_PRESSURE_SIZE: usize = 4;       // 2 bytes 0.1 hPa Unsigned
+pub const LPP_BAROMETRIC_PRESSURE_SIZE: usize = 4;       // 2 bytes 0.1 hPa unsigned
+
+/// Size of a voltage packet including channel and data type
+pub const LPP_VOLTAGE_SIZE: usize =             4;       // 2 bytes 0.01V unsigned
+
+/// Size of a current packet including channel and data type
+pub const LPP_CURRENT_SIZE: usize =             4;      // 2 bytes 1mA unsigned
+
+/// Size of a frequency packet including channel and data type
+pub const LPP_FREQUENCY_SIZE: usize =           6;      // 4 bytes, 1hz unsigned
+
+/// Size of an percentage packet including channel and data type
+pub const LPP_PERCRENTAGE_SIZE: usize =         3;      // 1 bytes, 0-100% unsigned
+
+/// Size of an altitude packet including channel and data type
+pub const LPP_ALTITUDE_SIZE: usize =            4;      // 2 bytes, 1M signed
+
+/// Size of a concentration packet including channel and data type
+pub const LPP_CONCENTRATION_SIZE: usize =       4;      // 2 bytes, 1ppm unsigned
+
+/// Size of a power packet including channel and data type
+pub const LPP_POWER_SIZE: usize =               4;      // 2 bytes, 1W unsigned
+
+/// Size of a distance packet including channel and data type
+pub const LPP_DISTANCE_SIZE: usize =            6;      // 4 bytes, 1mm unsigned
+
+/// Size of an energy packet including channel and data type
+pub const LPP_ENERGY_SIZE: usize =              6;      // 4 bytes, 1Wh unsigned
+
+/// Size of a direction packet including channel and data type
+pub const LPP_DIRECTION_SIZE: usize =           4;      // 2 bytes, 1deg, unsigned
+
+/// Size of a unix time packet including channel and data type
+pub const LPP_UNIXTIME_SIZE: usize =            6;      // 4 bytes, unsigned
 
 /// Size of a gyrometer packet including channel and data type
 pub const LPP_GYROMETER_SIZE: usize =           8;       // 2 bytes per axis, 0.01 °/s
 
+/// Size of a color packet including channel and data type
+pub const LPP_COLOR_SIZE: usize =               5;      // 1 bytes per color, RGB order
+
 /// Size of a GPS packet including channel and data type
 pub const LPP_GPS_SIZE: usize =                 11;      // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
+
+/// Size of a switch packet including channel and data type
+pub const LPP_SWITCH_SIZE: usize =              3;      // 1 byte 0/1
 
 /// This struct contains the data of the added payload objects and an index that points to the next free
 /// value in the array. All newly added values will increase the index. After adding all the values, the buffer
@@ -102,7 +186,9 @@ pub struct CayenneLPP<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     /// The buffer is too small to add the value
-    InsufficientMemory
+    InsufficientMemory,
+    /// The provided value is not representable by CayenneLPP
+    NotRepresentable,
 }
 
 impl<'a> CayenneLPP<'a> {
@@ -190,6 +276,25 @@ impl<'a> CayenneLPP<'a> {
         self.buffer[{ self.index += 1; self.index }] = LPP_ANALOG_OUTPUT;
         self.buffer[{ self.index += 1; self.index }] = analog_output_bytes[0];
         self.buffer[{ self.index += 1; self.index }] = analog_output_bytes[1];
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for a generic sensor to the Cayenne LPP data structure. The units are not specified.
+    pub fn add_generic_sensor(&mut self, channel: u8, value: u32) -> Result<(), Error> {
+        if self.index + LPP_GENERIC_SENSOR_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        let value_bytes = value.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_GENERIC_SENSOR;
+        self.buffer[{ self.index += 1; self.index }] = value_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = value_bytes[1];
+        self.buffer[{ self.index += 1; self.index }] = value_bytes[2];
+        self.buffer[{ self.index += 1; self.index }] = value_bytes[3];
         self.index += 1;
 
         Ok(())
@@ -297,6 +402,184 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
+    /// Adds the payload for a voltage to the Cayenne LPP data structure (in volts)
+    pub fn add_voltage(&mut self, channel: u8, voltage: f32) -> Result<(), Error> {
+        if self.index + LPP_VOLTAGE_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        if voltage * 100.0 > u16::MAX as f32 {
+            return Err(Error::NotRepresentable);
+        }
+    
+        let voltage: u16 = (voltage * 100.0) as u16;
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_VOLTAGE;
+        self.buffer[{ self.index += 1; self.index }] = (voltage >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = voltage as u8;
+        self.index += 1;
+        
+        Ok(())
+    }
+
+    /// Adds the payload for a current to the Cayenne LPP data structure (in amps)
+    pub fn add_current(&mut self, channel: u8, amperage: f32) -> Result<(), Error> {
+        if self.index + LPP_CURRENT_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        if amperage * 1000.0 > u16::MAX as f32 {
+            return Err(Error::NotRepresentable);
+        }
+    
+        let amperage: u16 = (amperage * 1000.0) as u16;
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_CURRENT;
+        self.buffer[{ self.index += 1; self.index }] = (amperage >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = amperage as u8;
+        self.index += 1;
+        
+        Ok(())
+    }
+
+    /// Adds the payload for a frequency to the Cayenne LPP data structure. The units are in hertz
+    pub fn add_frequency(&mut self, channel: u8, frequency: u32) -> Result<(), Error> {
+        if self.index + LPP_FREQUENCY_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        let frequency_bytes = frequency.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_FREQUENCY;
+        self.buffer[{ self.index += 1; self.index }] = frequency_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = frequency_bytes[1];
+        self.buffer[{ self.index += 1; self.index }] = frequency_bytes[2];
+        self.buffer[{ self.index += 1; self.index }] = frequency_bytes[3];
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for a percentage to the CayenneLPP data structure.  The units are single percent (0-100)%
+    pub fn add_percentage(&mut self, channel: u8, percentage: u8) -> Result<(), Error> {
+        if self.index + LPP_PERCRENTAGE_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_PERCRENTAGE;
+        self.buffer[{ self.index += 1; self.index }] = percentage;
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for a altitude to the Cayenne LPP data structure (in meters)
+    pub fn add_altitude(&mut self, channel: u8, altitude: i16) -> Result<(), Error> {
+        if self.index + LPP_ALTITUDE_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_ALTITUDE;
+        self.buffer[{ self.index += 1; self.index }] = (altitude >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = altitude as u8;
+        self.index += 1;
+        
+        Ok(())
+    }
+
+    /// Adds the payload for a power to the Cayenne LPP data structure (in watts)
+    pub fn add_power(&mut self, channel: u8, power: i16) -> Result<(), Error> {
+        if self.index + LPP_POWER_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_POWER;
+        self.buffer[{ self.index += 1; self.index }] = (power >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = power as u8;
+        self.index += 1;
+        
+        Ok(())
+    }
+
+    /// Adds the payload for a frequency to the Cayenne LPP data structure. The units are in millimeters
+    pub fn add_distance(&mut self, channel: u8, distance: u32) -> Result<(), Error> {
+        if self.index + LPP_DISTANCE_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        let distance_bytes = distance.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_DISTANCE;
+        self.buffer[{ self.index += 1; self.index }] = distance_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = distance_bytes[1];
+        self.buffer[{ self.index += 1; self.index }] = distance_bytes[2];
+        self.buffer[{ self.index += 1; self.index }] = distance_bytes[3];
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for a energy to the Cayenne LPP data structure. The units are in single Wh
+    pub fn add_energy(&mut self, channel: u8, energy: u32) -> Result<(), Error> {
+        if self.index + LPP_ENERGY_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        let energy_bytes = energy.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_ENERGY;
+        self.buffer[{ self.index += 1; self.index }] = energy_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = energy_bytes[1];
+        self.buffer[{ self.index += 1; self.index }] = energy_bytes[2];
+        self.buffer[{ self.index += 1; self.index }] = energy_bytes[3];
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for a direction to the Cayenne LPP data structure (in degrees)
+    pub fn add_direction(&mut self, channel: u8, direction: u16) -> Result<(), Error> {
+        if self.index + LPP_DIRECTION_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_DIRECTION;
+        self.buffer[{ self.index += 1; self.index }] = (direction >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = direction as u8;
+        self.index += 1;
+        
+        Ok(())
+    }
+
+    /// Adds the payload for a unixtime to the Cayenne LPP data structure.
+    /// The units are in seconds, and it's relative to unix epoch
+    pub fn add_unixtime(&mut self, channel: u8, unixtime: u32) -> Result<(), Error> {
+        if self.index + LPP_UNIXTIME_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        let unixtime_bytes = unixtime.to_be_bytes();
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_UNIXTIME;
+        self.buffer[{ self.index += 1; self.index }] = unixtime_bytes[0];
+        self.buffer[{ self.index += 1; self.index }] = unixtime_bytes[1];
+        self.buffer[{ self.index += 1; self.index }] = unixtime_bytes[2];
+        self.buffer[{ self.index += 1; self.index }] = unixtime_bytes[3];
+        self.index += 1;
+
+        Ok(())
+    }
+
     /// Adds the payload for a gyrometer to the Cayenne LPP data structure.
     pub fn add_gyrometer(&mut self, channel: u8, x: f32, y: f32, z: f32) -> Result<(), Error> {
         if self.index + LPP_GYROMETER_SIZE > self.buffer.len() {
@@ -343,6 +626,51 @@ impl<'a> CayenneLPP<'a> {
         self.buffer[{ self.index += 1; self.index }] = (vz >> 16) as u8;
         self.buffer[{ self.index += 1; self.index }] = (vz >> 8) as u8;
         self.buffer[{ self.index += 1; self.index }] = vz as u8;
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for switch to the Cayenne LPP data structure. It's a byte that's just 0/1
+    pub fn add_switch(&mut self, channel: u8, value: u8) -> Result<(), Error> {
+        if self.index + LPP_SWITCH_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_SWITCH;
+        self.buffer[{ self.index += 1; self.index }] = value;
+        self.index += 1;
+
+        Ok(())
+    }
+
+    /// Adds the payload for a concentration to the Cayenne LPP data structure (in ppm)
+    pub fn add_concentration(&mut self, channel: u8, concentration: u16) -> Result<(), Error> {
+        if self.index + LPP_CONCENTRATION_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_CONCENTRATION;
+        self.buffer[{ self.index += 1; self.index }] = (concentration >> 8) as u8;
+        self.buffer[{ self.index += 1; self.index }] = concentration as u8;
+        self.index += 1;
+        
+        Ok(())
+    }
+
+    /// Adds the payload for color to the Cayenne LPP data structure. It's a byte per color channel
+    pub fn add_color(&mut self, channel: u8, red: u8, green: u8, blue: u8) -> Result<(), Error> {
+        if self.index + LPP_COLOR_SIZE > self.buffer.len() {
+            return Err(Error::InsufficientMemory);
+        }
+
+        self.buffer[self.index] = channel;
+        self.buffer[{ self.index += 1; self.index }] = LPP_COLOR;
+        self.buffer[{ self.index += 1; self.index }] = red;
+        self.buffer[{ self.index += 1; self.index }] = green;
+        self.buffer[{ self.index += 1; self.index }] = blue;
         self.index += 1;
 
         Ok(())

@@ -73,6 +73,32 @@ fn add_analog_input_overflow() {
 }
 
 #[test]
+fn add_generic_sensor() {
+    let mut buffer = [0u8; 2 * LPP_GENERIC_SENSOR_SIZE];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_generic_sensor(3, 0x01234567).unwrap();
+    lpp.add_generic_sensor(5, 0x89abcdef).unwrap();
+
+    let expected_bytes = [
+        0x03, LPP_GENERIC_SENSOR, 0x01, 0x23, 0x45, 0x67,
+        0x05, LPP_GENERIC_SENSOR, 0x89, 0xab, 0xcd, 0xef];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_generic_sensor_overflow() {
+    let mut buffer = [0u8; LPP_GENERIC_SENSOR_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_generic_sensor(3, 123).unwrap();
+    let result = lpp.add_generic_sensor(5, 456);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
 fn add_analog_output() {
     let mut buffer: [u8; 2 * LPP_ANALOG_OUTPUT_SIZE] = [0; 2 * LPP_ANALOG_OUTPUT_SIZE];
     let mut lpp = CayenneLPP::new(&mut buffer);
@@ -272,6 +298,297 @@ fn add_barometric_pressure_overflow() {
 }
 
 #[test]
+fn add_voltage() {
+    let mut buffer = [0u8; LPP_VOLTAGE_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_voltage(3, 123.456).unwrap();
+    lpp.add_voltage(5,   7.890).unwrap();
+
+    let expected_bytes = [
+        0x03, LPP_VOLTAGE, 0x30, 0x39,
+        0x05, LPP_VOLTAGE, 0x03, 0x15
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_voltage_overflow() {
+    let mut buffer = [0u8; LPP_VOLTAGE_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_voltage(3, 123.456).unwrap();
+    let result = lpp.add_voltage(5, 7.89);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_voltage_not_representable() {
+    let mut buffer = [0u8; LPP_VOLTAGE_SIZE];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let result = lpp.add_voltage(1, 789.012);
+
+    assert_eq!(Err(Error::NotRepresentable), result);
+}
+
+#[test]
+fn add_current() {
+    let mut buffer = [0u8; LPP_CURRENT_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_current(3, 12.3456).unwrap();
+    lpp.add_current(5,  0.7890).unwrap();
+
+    let expected_bytes = [
+        0x03, LPP_CURRENT, 0x30, 0x39,
+        0x05, LPP_CURRENT, 0x03, 0x15
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_current_overflow() {
+    let mut buffer = [0u8; LPP_CURRENT_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_current(3, 12.3456).unwrap();
+    let result = lpp.add_current(5, 0.7890);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_current_not_representable() {
+    let mut buffer = [0u8; LPP_VOLTAGE_SIZE];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let result = lpp.add_current(1, 789.012);
+
+    assert_eq!(Err(Error::NotRepresentable), result);
+}
+
+#[test]
+fn add_frequency() {
+    let mut buffer = [0u8; LPP_FREQUENCY_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_frequency(3,   910_525_000).unwrap();
+    lpp.add_frequency(5, 1_234_567_890).unwrap();
+
+    let expected_bytes = [
+        0x03, LPP_FREQUENCY, 0x36, 0x45, 0x82, 0x48,
+        0x05, LPP_FREQUENCY, 0x49, 0x96, 0x02, 0xD2,
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_frequency_overflow() {
+    let mut buffer = [0u8; LPP_FREQUENCY_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_frequency(3,   910_525_000).unwrap();
+    let result = lpp.add_frequency(5, 1_234_567_890);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_percentage() {
+    let mut buffer = [0u8; LPP_PERCRENTAGE_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_percentage(3, 12).unwrap();
+    lpp.add_percentage(5, 34).unwrap();
+
+    let expected_bytes = [
+        3, LPP_PERCRENTAGE, 12,
+        5, LPP_PERCRENTAGE, 34
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_percentage_overflow() {
+    let mut buffer = [0u8; LPP_PERCRENTAGE_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_percentage(3, 12).unwrap();
+    let result = lpp.add_percentage(5, 34);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_altitude() {
+    let mut buffer = [0u8; LPP_ALTITUDE_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_altitude(3, -1234).unwrap();
+    lpp.add_altitude(5,  4567).unwrap();
+
+    let expected_bytes = [
+        3, LPP_ALTITUDE, 0xfb, 0x2e,
+        5, LPP_ALTITUDE, 0x11, 0xd7
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_altitude_overflow() {
+    let mut buffer = [0u8; LPP_ALTITUDE_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_altitude(3, -1234).unwrap();
+    let result = lpp.add_altitude(5,  4567);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_power() {
+    let mut buffer = [0u8; LPP_POWER_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_power(3, 1234).unwrap();
+    lpp.add_power(5, 5678).unwrap();
+
+    let expected_bytes = [
+        3, LPP_POWER, 0x04, 0xd2,
+        5, LPP_POWER, 0x16, 0x2e
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_power_overflow() {
+    let mut buffer = [0u8; LPP_POWER_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_power(3, 1234).unwrap();
+    let result = lpp.add_power(5, 5678);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_distance() {
+    let mut buffer = [0u8; LPP_DISTANCE_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_distance(3, 123456789).unwrap();
+    lpp.add_distance(5, 0).unwrap();
+
+    let expected_bytes = [
+        3, LPP_DISTANCE, 0x07, 0x5b, 0xcd, 0x15,
+        5, LPP_DISTANCE, 0x00, 0x00, 0x00, 0x00
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_distance_overflow() {
+    let mut buffer = [0u8; LPP_DISTANCE_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_distance(3, 123456789).unwrap();
+    let result = lpp.add_distance(5, 0);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_energy() {
+    let mut buffer = [0u8; LPP_ENERGY_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_energy(3, 123456789).unwrap();
+    lpp.add_energy(5, 0).unwrap();
+
+    let expected_bytes = [
+        3, LPP_ENERGY, 0x07, 0x5b, 0xcd, 0x15,
+        5, LPP_ENERGY, 0x00, 0x00, 0x00, 0x00
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_energy_overflow() {
+    let mut buffer = [0u8; LPP_ENERGY_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_energy(3, 123456789).unwrap();
+    let result = lpp.add_energy(5, 0);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_direction() {
+    let mut buffer = [0u8; LPP_DIRECTION_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_direction(3, 123).unwrap();
+    lpp.add_direction(5, 359).unwrap();
+
+    let expected_bytes = [
+        3, LPP_DIRECTION, 0x00, 0x7b,
+        5, LPP_DIRECTION, 0x01, 0x67
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_direction_overflow() {
+    let mut buffer = [0u8; LPP_DIRECTION_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_direction(3, 123).unwrap();
+    let result = lpp.add_direction(5, 359);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_unixtime() {
+    let mut buffer = [0u8; LPP_UNIXTIME_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_unixtime(3, 123456789).unwrap();
+    lpp.add_unixtime(5, 0).unwrap();
+
+    let expected_bytes: [u8; 12] = [
+        3, LPP_UNIXTIME, 0x07, 0x5b, 0xcd, 0x15,
+        5, LPP_UNIXTIME, 0x00, 0x00, 0x00, 0x00
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_unixtime_overflow() {
+    let mut buffer = [0u8; LPP_UNIXTIME_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_unixtime(3, 123456789).unwrap();
+    let result = lpp.add_unixtime(5, 0);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+
+#[test]
 fn add_gyrometer_ok() {
     let mut buffer: [u8; 2 * LPP_GYROMETER_SIZE] = [0; 2 * LPP_GYROMETER_SIZE];
     let mut lpp = CayenneLPP::new(&mut buffer);
@@ -319,6 +636,87 @@ fn add_gps_overflow() {
 
     lpp.add_gps(3, 27.2, 34.2, 56.1).unwrap();
     let result = lpp.add_gps(5, 25.5, 98.1, 23.5);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_switch() {
+    let mut buffer = [0u8; LPP_SWITCH_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_switch(3, 0).unwrap();
+    lpp.add_switch(5, 1).unwrap();
+
+    let expected_bytes = [
+        3, LPP_SWITCH, 0,
+        5, LPP_SWITCH, 1
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_switch_overflow() {
+    let mut buffer = [0u8; LPP_SWITCH_SIZE + 1];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_switch(3, 0).unwrap();
+    let result = lpp.add_switch(5, 1);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_concentration() {
+    let mut buffer = [0u8; LPP_CONCENTRATION_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_concentration(3, 65_000).unwrap();
+    lpp.add_concentration(5, 12_345).unwrap();
+
+    let expected_bytes = [
+        3, LPP_CONCENTRATION, 0xfd, 0xe8,
+        5, LPP_CONCENTRATION, 0x30, 0x39
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_concentration_overflow() {
+    let mut buffer = [0u8; LPP_CONCENTRATION_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_concentration(3, 65_000).unwrap();
+    let result = lpp.add_concentration(5, 12_345);
+
+    assert_eq!(Err(Error::InsufficientMemory), result);
+}
+
+#[test]
+fn add_color() {
+    let mut buffer = [0u8; LPP_COLOR_SIZE * 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_color(3, 0x12, 0x34, 0x56).unwrap();
+    lpp.add_color(5, 0x78, 0x9a, 0xbc).unwrap();
+
+    let expected_bytes = [
+        3, LPP_COLOR, 0x12, 0x34, 0x56,
+        5, LPP_COLOR, 0x78, 0x9a, 0xbc
+    ];
+
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_color_overflow() {
+    let mut buffer = [0u8; LPP_COLOR_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_color(3, 0x12, 0x34, 0x56).unwrap();
+    let result = lpp.add_color(5, 0x78, 0x9a, 0xbc);
 
     assert_eq!(Err(Error::InsufficientMemory), result);
 }
