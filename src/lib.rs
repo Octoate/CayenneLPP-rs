@@ -399,12 +399,12 @@ impl<'a> CayenneLPP<'a> {
                 s + 1.0
             }
             // Less than zero, round toward zero
-            (s, f) if s < 0.0 && f < 0.5 => {
+            (s, f) if s < 0.0 && f > -0.5 => {
                 s
             },
             // Less than zero, round away from zero
-            (s, f) if s < 0.0 && f >= 0.5 => {
-                s + 1.0
+            (s, f) if s < 0.0 && f <= -0.5 => {
+                s - 1.0
             },
             // Should never, happen, just clamp if it does...
             (s, _) => {
