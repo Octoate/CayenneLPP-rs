@@ -217,6 +217,39 @@ impl<'a> CayenneLPP<'a> {
         &self.buffer[0..self.index]
     }
 
+    /// Adds a scalar value to the data structure.
+    pub fn add_scalar(&mut self, scalar: &CayenneLPPScalar) -> Result<(), Error> {
+        let channel = scalar.channel;
+        match scalar.value {
+            CayenneLPPValue::DigitalInput(s) => self.add_digital_input(channel, s),
+            CayenneLPPValue::DigitalOutput(s) => self.add_digital_output(channel, s),
+            CayenneLPPValue::AnalogInput(s) => self.add_analog_input(channel, s),
+            CayenneLPPValue::AnalogOutput(s) => self.add_analog_output(channel, s),
+            CayenneLPPValue::GenericSensor(s) => self.add_generic_sensor(channel, s),
+            CayenneLPPValue::Luminosity(s) => self.add_luminosity(channel, s),
+            CayenneLPPValue::Presence(s) => self.add_presence(channel, s),
+            CayenneLPPValue::Temperature(s) => self.add_temperature(channel, s),
+            CayenneLPPValue::RelativeHumidity(s) => self.add_relative_humidity(channel, s),
+            CayenneLPPValue::Accelerometer(x, y, z) => self.add_accelerometer(channel, x, y, z),
+            CayenneLPPValue::BarometricPressure(s) => self.add_barometric_pressure(channel, s),
+            CayenneLPPValue::Voltage(s) => self.add_voltage(channel, s),
+            CayenneLPPValue::Current(s) => self.add_current(channel, s),
+            CayenneLPPValue::Frequency(s) => self.add_frequency(channel, s),
+            CayenneLPPValue::Percentage(s) => self.add_percentage(channel, s),
+            CayenneLPPValue::Altitude(s) => self.add_altitude(channel, s),
+            CayenneLPPValue::Concentration(s) => self.add_concentration(channel, s),
+            CayenneLPPValue::Power(s) => self.add_power(channel, s),
+            CayenneLPPValue::Distance(s) => self.add_distance(channel, s),
+            CayenneLPPValue::Energy(s) => self.add_energy(channel, s),
+            CayenneLPPValue::Direction(s) => self.add_direction(channel, s),
+            CayenneLPPValue::UnixTime(s) => self.add_unixtime(channel, s),
+            CayenneLPPValue::Gyrometer(x, y, z) => self.add_gyrometer(channel, x, y, z),
+            CayenneLPPValue::Color(r, g, b)        => self.add_color(channel, r, g, b),
+            CayenneLPPValue::GPS(lat, lon, alt) => self.add_gps(channel, lat, lon, alt),
+            CayenneLPPValue::Switch(s) => self.add_switch(channel, if s { 1 } else { 0 }),
+        }
+    }
+
     /// Adds the payload for a digital input to the Cayenne LPP data structure.
     pub fn add_digital_input(&mut self, channel: u8, value: u8) -> Result<(), Error> {
         if self.index + LPP_DIGITAL_INPUT_SIZE > self.buffer.len() {
@@ -353,9 +386,35 @@ impl<'a> CayenneLPP<'a> {
             return Err(Error::InsufficientMemory);
         }
 
+        let scaled_value = relative_humidity * 2.0;
+        let fraction = scaled_value % 1.0;
+        let whole_number = scaled_value - fraction;
+        let rounded_value = match (whole_number, fraction) {
+            // Greater than zero, Round toward zero
+            (s, f) if s > 0.0 && f < 0.5 => {
+                s
+            },
+            // Greater than zero, round away from zero
+            (s, f) if s > 0.0 && f >= 0.5 => {
+                s + 1.0
+            }
+            // Less than zero, round toward zero
+            (s, f) if s < 0.0 && f < 0.5 => {
+                s
+            },
+            // Less than zero, round away from zero
+            (s, f) if s < 0.0 && f >= 0.5 => {
+                s + 1.0
+            },
+            // Should never, happen, just clamp if it does...
+            (s, _) => {
+                s
+            }
+        };
+
         self.buffer[self.index] = channel;
         self.buffer[{ self.index += 1; self.index }] = LPP_RELATIVE_HUMIDITY;
-        self.buffer[{ self.index += 1; self.index }] = (relative_humidity * 2.0) as u8;
+        self.buffer[{ self.index += 1; self.index }] = rounded_value as u8;
         self.index += 1;
 
         Ok(())
@@ -674,5 +733,510 @@ impl<'a> CayenneLPP<'a> {
         self.index += 1;
 
         Ok(())
+    }
+}
+
+/// Enumeration of the CayenneLPP value that are supported by this library
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum CayenneLPPValue {
+    /// Data type of a digital input
+    DigitalInput(u8),
+
+    /// Data type of a digital output
+    DigitalOutput(u8),
+
+    /// Data type of an analog input
+    AnalogInput(f32),
+
+    /// Data type of an analog output
+    AnalogOutput(f32),
+
+    /// Data type of a generic sensor
+    GenericSensor(u32),
+
+    /// Data type of a luminosity value
+    Luminosity(u16),
+
+    /// Data type of a presence sensor
+    Presence(u8),
+
+    /// Data type of a temperature value
+    Temperature(f32),
+
+    /// Data type of a relative humidity value
+    RelativeHumidity(f32),
+    
+    /// Data type of accelerometer values
+    Accelerometer(f32, f32, f32),
+
+    /// Data type of a barometric pressure value
+    BarometricPressure(f32),
+   
+    /// Data type of a voltage value
+    Voltage(f32),
+
+    /// Data type of a current value
+    Current(f32),
+
+    /// Data type of a frequency value
+    Frequency(u32),
+
+    /// Data type of a percentage
+    Percentage(u8),
+
+    /// Data type of an altitude
+    Altitude(i16),
+
+    /// Data type of a concentration
+    Concentration(u16),
+
+    /// Data type of a power value
+    Power(i16),
+
+    /// Data type of a distance value
+    Distance(u32),
+
+    /// Data type of an energy value
+    Energy(u32),
+
+    /// Data type of a direction value
+    Direction(u16),
+    /// Data type of a time (unix timestamp)
+    UnixTime(u32),
+    
+    /// Data type of gyrometer values
+    Gyrometer(f32, f32, f32),
+
+    /// Data type of a color value
+    Color(u8, u8, u8),
+
+    /// Data type of GPS value
+    GPS(f32, f32, f32),
+
+    /// Data type of a switch value
+    Switch(bool),
+}
+
+/// Single value parsed from a CayenneLPP data structure,
+/// invluding the enumeration of its value and it's channel.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct CayenneLPPScalar {
+    /// The channel value parsed from a data structure
+    pub channel: u8,
+
+    /// Value of the calue parsed from a data structure
+    pub value: CayenneLPPValue
+}
+
+/// Iterator over the CayenneLPP Scalars parsed from a datastructure
+pub struct CayenneLPPIntoIterator<'a> {
+    /// The CayenneLPP instance that this iterator is over
+    lpp: CayenneLPP<'a>,
+
+    /// The current index into the CayenneLPP datastructure.
+    index: usize
+}
+
+impl<'a> CayenneLPPIntoIterator<'a> {
+    // All of these functions are unsafe in the sense that they
+    // rely on the size bounds being already checked.
+    fn get_u32(&mut self) -> u32 {
+        let byte_1 = self.lpp.buffer[self.index + 0] as u32;
+        let byte_2 = self.lpp.buffer[self.index + 1] as u32;
+        let byte_3 = self.lpp.buffer[self.index + 2] as u32;
+        let byte_4 = self.lpp.buffer[self.index + 3] as u32;
+        self.index += 4;
+
+        let mut retval: u32 = 0;
+        retval += byte_1 << 24;
+        retval += byte_2 << 16;
+        retval += byte_3 <<  8;
+        retval += byte_4 <<  0;
+
+        retval
+    }
+
+    /// Gets three bytes out of the byte array and coerces it into
+    /// a 24-bit signed integer.  This is only used by the GPS packet.
+    fn get_i24(&mut self) -> i32 {
+        let byte_1 = self.lpp.buffer[self.index + 0] as i32;
+        let byte_2 = self.lpp.buffer[self.index + 1] as i32;
+        let byte_3 = self.lpp.buffer[self.index + 2] as i32;
+        self.index += 3;
+
+        let mut retval: i32 = 0;
+        retval += byte_1 << 16;
+        retval += byte_2 <<  8;
+        retval += byte_3 <<  0;
+
+        // Perform sign extension.  Because we're coming from a 24-bit
+        // signed integer, and it's going into a 32-bit type, we need
+        // to check whether the highest bit is a '1', and if so, ensure
+        // the whole top byte is all ones.
+        if 0x80 & byte_1 == 0x80 {
+            retval += 0xFF000000u32 as i32;
+        }
+
+        retval
+    }
+
+    fn get_u16(&mut self) -> u16 {
+        let byte_1 = self.lpp.buffer[self.index + 0] as u16;
+        let byte_2 = self.lpp.buffer[self.index + 1] as u16;
+        self.index += 2;
+
+        let mut retval: u16 = 0;
+        retval += byte_1 << 8;
+        retval += byte_2 << 0;
+
+        retval
+    }
+
+    fn get_i16(&mut self) -> i16 {
+        self.get_u16() as i16
+    }
+
+    fn get_u8(&mut self) -> u8 {
+        let retval = self.lpp.buffer[self.index];
+        self.index += 1;
+        retval
+    }
+}
+
+impl<'a> Iterator for CayenneLPPIntoIterator<'a> {
+    type Item = CayenneLPPScalar;
+
+    fn next(&mut self) -> Option<CayenneLPPScalar> {
+        let buffer = &self.lpp.buffer;
+        
+        // Identify the case where we've gotten to the end of the buffer
+        if buffer.len() < self.index + 1 {
+            return None
+        }
+
+        // Get the channel from the current index.  The index will
+        // always be set to the first byte of the _next_ scalar.
+        // when next is called.
+        let channel = buffer[self.index];
+        self.index += 1;
+        let type_code = buffer[self.index];
+        self.index += 1;
+
+        match type_code {
+            LPP_DIGITAL_INPUT => {
+                let remaining_length = LPP_DIGITAL_INPUT_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::DigitalInput(self.get_u8()) }
+                )
+            },
+
+            LPP_DIGITAL_OUTPUT => {
+                let remaining_length = LPP_DIGITAL_OUTPUT_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::DigitalOutput(self.get_u8()) }
+                )
+            },
+
+            LPP_ANALOG_INPUT => {
+                let remaining_length = LPP_ANALOG_INPUT_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let value = self.get_i16() as f32 / 100.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::AnalogInput(value) 
+                })
+            },
+
+            LPP_ANALOG_OUTPUT => {
+                let remaining_length = LPP_ANALOG_OUTPUT_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let value = self.get_i16() as f32 / 100.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::AnalogOutput(value) 
+                })
+            },
+
+            LPP_GENERIC_SENSOR => {
+                let remaining_length = LPP_GENERIC_SENSOR_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::GenericSensor(self.get_u32())
+                })
+            },
+
+            LPP_LUMINOSITY => {
+                let remaining_length = LPP_LUMINOSITY_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Luminosity(self.get_u16())
+                })
+            },
+
+            LPP_PRESENCE => {
+                let remaining_length = LPP_PERCRENTAGE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Presence(self.get_u8()) }
+                )
+            },
+
+            LPP_TEMPERATURE => {
+                let remaining_length = LPP_TEMPERATURE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let value = self.get_i16() as f32 / 10.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Temperature(value) 
+                })
+
+            },
+
+            LPP_RELATIVE_HUMIDITY => {
+                let remaining_length = LPP_RELATIVE_HUMIDITY_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let value = self.get_u8() as f32 / 2.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::RelativeHumidity(value)
+                })
+            },
+
+            LPP_ACCELEROMETER => {
+                let remaining_length = LPP_ACCELEROMETER_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let vx = self.get_i16() as f32 / 1000.0;
+                let vy = self.get_i16() as f32 / 1000.0;
+                let vz = self.get_i16() as f32 / 1000.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Accelerometer(
+                        vx, vy, vz
+                    )
+                })
+            },
+
+            LPP_BAROMETRIC_PRESSURE => {
+                let remaining_length = LPP_BAROMETRIC_PRESSURE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let pressure = self.get_u16() as f32 / 10.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::BarometricPressure(pressure)
+                })
+            },
+
+            LPP_VOLTAGE => {
+                let remaining_length = LPP_VOLTAGE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let voltage = self.get_u16() as f32 / 100.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Voltage(voltage)
+                })
+            },
+
+            LPP_CURRENT => {
+                let remaining_length = LPP_CURRENT_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let amperage = self.get_u16() as f32 / 1000.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Current(amperage)
+                })
+            },
+
+            LPP_FREQUENCY => {
+                let remaining_length = LPP_FREQUENCY_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Frequency(self.get_u32())
+                })
+            },
+
+            LPP_PERCRENTAGE => {
+                let remaining_length = LPP_PERCRENTAGE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Percentage(self.get_u8()) }
+                )
+            },
+
+            LPP_ALTITUDE => {
+                let remaining_length = LPP_ALTITUDE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(
+                    CayenneLPPScalar {
+                        channel,
+                        value: CayenneLPPValue::Altitude(self.get_i16())
+                    }
+                )
+            },
+
+            LPP_POWER => {
+                let remaining_length = LPP_POWER_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Power(self.get_i16())
+                })
+            },
+
+            LPP_DISTANCE => {
+                let remaining_length = LPP_DISTANCE_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Distance(self.get_u32())
+                })
+            },
+
+            LPP_ENERGY => {
+                let remaining_length = LPP_ENERGY_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Energy(self.get_u32())
+                })
+            },
+
+            LPP_DIRECTION => {
+                let remaining_length = LPP_DIRECTION_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Direction(self.get_u16())
+                })
+            },
+
+            LPP_UNIXTIME => {
+                let remaining_length = LPP_UNIXTIME_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::UnixTime(self.get_u32())
+                })
+            },
+
+            LPP_GYROMETER => {
+                let remaining_length = LPP_GYROMETER_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let vx = self.get_u16() as f32 / 100.0;
+                let vy = self.get_u16() as f32 / 100.0;
+                let vz = self.get_u16() as f32 / 100.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Gyrometer(
+                        vx, vy, vz
+                    )
+                })
+            },
+
+            LPP_GPS => {
+                let remaining_length = LPP_GPS_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let lat = self.get_i24() as f32 / 10_000.0;
+                let lon = self.get_i24() as f32 / 10_000.0;
+                let alt = self.get_i24() as f32 / 100.0;
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::GPS(
+                        lat,
+                        lon,
+                        alt)
+                })
+            },
+
+            LPP_SWITCH => {
+                let remaining_length = LPP_SWITCH_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Switch(self.get_u8() != 0)
+                })
+            },
+
+            LPP_CONCENTRATION => {
+                let remaining_length = LPP_CONCENTRATION_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Concentration(self.get_u16())
+                })
+                
+            },
+
+            LPP_COLOR => {
+                let remaining_length = LPP_COLOR_SIZE - 2;
+                if buffer.len() < self.index + remaining_length { return None }
+
+                let r = self.get_u8();
+                let g = self.get_u8();
+                let b = self.get_u8();
+
+                Some(CayenneLPPScalar {
+                    channel,
+                    value: CayenneLPPValue::Color(r, g, b)
+                })
+            },
+
+            _ => None
+        }
+    }
+}
+
+impl<'a> IntoIterator for CayenneLPP<'a> {
+    type Item = CayenneLPPScalar;
+    type IntoIter = CayenneLPPIntoIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        CayenneLPPIntoIterator {
+            lpp: self,
+            index: 0
+        }
     }
 }

@@ -50,7 +50,7 @@ fn test_all_possible_payloads() {
     lpp.add_accelerometer(3, 6.427, 3.129, -2.853).unwrap();
     lpp.add_barometric_pressure(5, 992.3).unwrap();
     lpp.add_voltage(3, 123.456).unwrap();
-    lpp.add_current(5, 12.3456).unwrap();
+    lpp.add_current(5, 12.345).unwrap();
     lpp.add_frequency(3, 910_525_000).unwrap();
     lpp.add_percentage(3, 12).unwrap();
     lpp.add_altitude(3, -1234).unwrap();
@@ -75,7 +75,7 @@ fn test_all_possible_payloads() {
         0x09, LPP_LUMINOSITY, 0x55, 0xAA,
         0x02, LPP_PRESENCE, 0xAA,
         0x05, LPP_TEMPERATURE, 0x00, 0xFF,
-        0x03, LPP_RELATIVE_HUMIDITY, 0x82,
+        0x03, LPP_RELATIVE_HUMIDITY, 0x83,
         0x03, LPP_ACCELEROMETER, 0x19, 0x1B, 0x0C, 0x39, 0xF4, 0xDB,
         0x05, LPP_BAROMETRIC_PRESSURE, 0x26, 0xC3,
         0x03, LPP_VOLTAGE, 0x30, 0x39,
@@ -98,4 +98,94 @@ fn test_all_possible_payloads() {
     // ...and compare them
     let buffer_slice = lpp.payload_slice();
     assert_eq!(expected_bytes, buffer_slice);
+}
+
+#[test]
+fn test_scalar_and_iter() {
+    // prepare an array that will fit the whole payload
+    const ADDITIONAL_BYTES: usize = 2;
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_ANALOG_INPUT_SIZE +
+        LPP_ANALOG_OUTPUT_SIZE +
+        LPP_GENERIC_SENSOR_SIZE +
+        LPP_LUMINOSITY_SIZE +
+        LPP_PRESENCE_SIZE +
+        LPP_TEMPERATURE_SIZE +
+        LPP_RELATIVE_HUMIDITY_SIZE +
+        LPP_ACCELEROMETER_SIZE +
+        LPP_BAROMETRIC_PRESSURE_SIZE +
+        LPP_VOLTAGE_SIZE +
+        LPP_CURRENT_SIZE +
+        LPP_FREQUENCY_SIZE +
+        LPP_PERCRENTAGE_SIZE +
+        LPP_ALTITUDE_SIZE +
+        LPP_POWER_SIZE +
+        LPP_DISTANCE_SIZE +
+        LPP_ENERGY_SIZE +
+        LPP_DIRECTION_SIZE +
+        LPP_UNIXTIME_SIZE +
+        LPP_GYROMETER_SIZE +
+        LPP_CONCENTRATION_SIZE +
+        LPP_COLOR_SIZE +
+        LPP_GPS_SIZE +
+        LPP_SWITCH_SIZE +
+        ADDITIONAL_BYTES
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    // Make an array of all the possible values of a scalar
+    // This will ensure that the code to add a scalar to the
+    // data structure is corrrect, and it'll also be used to
+    // verify that we can correctly pull them back out via
+    // the iterator;
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::AnalogInput(12.7) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::AnalogOutput(15.5) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::GenericSensor( 0x1234567) },
+        CayenneLPPScalar{ channel: 9, value: CayenneLPPValue::Luminosity(0x55AA) },
+        CayenneLPPScalar{ channel: 2, value: CayenneLPPValue::Presence(0xAA) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Temperature(25.5) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::RelativeHumidity(65.5) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Accelerometer(6.427, 3.129, -2.853) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::BarometricPressure(992.3) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Voltage(123.45) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Current(12.345) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Frequency(901_525_000) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Percentage(12) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Altitude(-1234) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Power(1234) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Distance(123456789) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Energy(123456789) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Direction(123) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::UnixTime(123456789) },
+        CayenneLPPScalar{ channel: 6, value: CayenneLPPValue::Gyrometer(12.34, 56.78, 9.0) },
+        CayenneLPPScalar{ channel: 1, value: CayenneLPPValue::GPS(42.3518, -87.9094, 10.0) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Switch(true) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Concentration(65000) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Color(0x12, 0x34, 0x56) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+
+    // Now, we should have all the data in the lpp structure;
+    // well iterate through the scalars zip'ed with the sample
+    // data and compare to make sure they match.  This will stop
+    // when one of the iters completes, so we'll keep track of
+    // how many we process.  If it's less than the size of the
+    // example array we know we terminated early.
+    let mut count = 0;
+    for (example, result) in scalars.into_iter().zip(lpp.into_iter()) {
+        assert_eq!(example, result);
+        count += 1;
+    }
+
+    assert_eq!(count, scalars.len());
+
 }

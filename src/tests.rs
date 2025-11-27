@@ -233,7 +233,7 @@ fn add_relative_humidity_ok() {
     lpp.add_relative_humidity(2, 100.0).unwrap();
     lpp.add_relative_humidity(3, 65.4).unwrap();
 
-    let expected_bytes: [u8; 6] = [0x02, LPP_RELATIVE_HUMIDITY, 0xC8, 0x03, LPP_RELATIVE_HUMIDITY, 0x82];
+    let expected_bytes: [u8; 6] = [0x02, LPP_RELATIVE_HUMIDITY, 0xC8, 0x03, LPP_RELATIVE_HUMIDITY, 0x83];
     assert_eq!(expected_bytes, buffer);
 }
 
