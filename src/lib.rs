@@ -60,7 +60,7 @@ pub const LPP_CURRENT: u8 =             117;     // 2 bytes 1mA unsigned
 pub const LPP_FREQUENCY: u8 =           118;     // 4 bytes 1hz unsigned
 
 /// Data type of a percentage
-pub const LPP_PERCRENTAGE: u8 =         120;     // 1 byte 1-100% unsigned
+pub const LPP_PERCENTAGE: u8 =          120;     // 1 byte 1-100% unsigned
 
 /// Data type of an altitude
 pub const LPP_ALTITUDE: u8 =            121;     // 2 byte 1m signed
@@ -139,7 +139,7 @@ pub const LPP_CURRENT_SIZE: usize =             4;      // 2 bytes 1mA unsigned
 pub const LPP_FREQUENCY_SIZE: usize =           6;      // 4 bytes, 1hz unsigned
 
 /// Size of an percentage packet including channel and data type
-pub const LPP_PERCRENTAGE_SIZE: usize =         3;      // 1 bytes, 0-100% unsigned
+pub const LPP_PERCENTAGE_SIZE: usize =          3;      // 1 bytes, 0-100% unsigned
 
 /// Size of an altitude packet including channel and data type
 pub const LPP_ALTITUDE_SIZE: usize =            4;      // 2 bytes, 1M signed
@@ -188,7 +188,7 @@ pub enum Error {
     /// The buffer is too small to add the value
     InsufficientMemory,
     /// The provided value is not representable by CayenneLPP
-    NotRepresentable,
+    OutOfRange,
 }
 
 impl<'a> CayenneLPP<'a> {
@@ -409,7 +409,7 @@ impl<'a> CayenneLPP<'a> {
         }
 
         if voltage * 100.0 > u16::MAX as f32 {
-            return Err(Error::NotRepresentable);
+            return Err(Error::OutOfRange);
         }
     
         let voltage: u16 = (voltage * 100.0) as u16;
@@ -430,7 +430,7 @@ impl<'a> CayenneLPP<'a> {
         }
 
         if amperage * 1000.0 > u16::MAX as f32 {
-            return Err(Error::NotRepresentable);
+            return Err(Error::OutOfRange);
         }
     
         let amperage: u16 = (amperage * 1000.0) as u16;
@@ -465,12 +465,12 @@ impl<'a> CayenneLPP<'a> {
 
     /// Adds the payload for a percentage to the CayenneLPP data structure.  The units are single percent (0-100)%
     pub fn add_percentage(&mut self, channel: u8, percentage: u8) -> Result<(), Error> {
-        if self.index + LPP_PERCRENTAGE_SIZE > self.buffer.len() {
+        if self.index + LPP_PERCENTAGE_SIZE > self.buffer.len() {
             return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
-        self.buffer[{ self.index += 1; self.index }] = LPP_PERCRENTAGE;
+        self.buffer[{ self.index += 1; self.index }] = LPP_PERCENTAGE;
         self.buffer[{ self.index += 1; self.index }] = percentage;
         self.index += 1;
 
@@ -493,7 +493,7 @@ impl<'a> CayenneLPP<'a> {
     }
 
     /// Adds the payload for a power to the Cayenne LPP data structure (in watts)
-    pub fn add_power(&mut self, channel: u8, power: i16) -> Result<(), Error> {
+    pub fn add_power(&mut self, channel: u8, power: u16) -> Result<(), Error> {
         if self.index + LPP_POWER_SIZE > self.buffer.len() {
             return Err(Error::InsufficientMemory);
         }
@@ -632,14 +632,14 @@ impl<'a> CayenneLPP<'a> {
     }
 
     /// Adds the payload for switch to the Cayenne LPP data structure. It's a byte that's just 0/1
-    pub fn add_switch(&mut self, channel: u8, value: u8) -> Result<(), Error> {
+    pub fn add_switch(&mut self, channel: u8, value: bool) -> Result<(), Error> {
         if self.index + LPP_SWITCH_SIZE > self.buffer.len() {
             return Err(Error::InsufficientMemory);
         }
 
         self.buffer[self.index] = channel;
         self.buffer[{ self.index += 1; self.index }] = LPP_SWITCH;
-        self.buffer[{ self.index += 1; self.index }] = value;
+        self.buffer[{ self.index += 1; self.index }] = if value { 1 } else { 0 };
         self.index += 1;
 
         Ok(())

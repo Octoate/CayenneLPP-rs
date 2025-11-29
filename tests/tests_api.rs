@@ -20,7 +20,7 @@ fn test_all_possible_payloads() {
         LPP_VOLTAGE_SIZE +
         LPP_CURRENT_SIZE +
         LPP_FREQUENCY_SIZE +
-        LPP_PERCRENTAGE_SIZE +
+        LPP_PERCENTAGE_SIZE +
         LPP_ALTITUDE_SIZE +
         LPP_POWER_SIZE +
         LPP_DISTANCE_SIZE +
@@ -61,7 +61,7 @@ fn test_all_possible_payloads() {
     lpp.add_unixtime(5, 123456789).unwrap();
     lpp.add_gyrometer(6, 12.34, 56.78, 9.0).unwrap();
     lpp.add_gps(1, 42.3518, -87.9094, 10.0).unwrap();
-    lpp.add_switch(3, 1).unwrap();
+    lpp.add_switch(3, true).unwrap();
     lpp.add_concentration(5, 65000).unwrap();
     lpp.add_color(3, 0x12, 0x34, 0x56).unwrap();
 
@@ -81,7 +81,7 @@ fn test_all_possible_payloads() {
         0x03, LPP_VOLTAGE, 0x30, 0x39,
         0x05, LPP_CURRENT, 0x30, 0x39,
         0x03, LPP_FREQUENCY, 0x36, 0x45, 0x82, 0x48,
-        0x03, LPP_PERCRENTAGE, 12,
+        0x03, LPP_PERCENTAGE, 12,
         0x03, LPP_ALTITUDE, 0xfb, 0x2e,
         0x05, LPP_POWER, 0x04, 0xd2,
         0x03, LPP_DISTANCE, 0x07, 0x5b, 0xcd, 0x15,

@@ -331,7 +331,7 @@ fn add_voltage_not_representable() {
 
     let result = lpp.add_voltage(1, 789.012);
 
-    assert_eq!(Err(Error::NotRepresentable), result);
+    assert_eq!(Err(Error::OutOfRange), result);
 }
 
 #[test]
@@ -368,7 +368,7 @@ fn add_current_not_representable() {
 
     let result = lpp.add_current(1, 789.012);
 
-    assert_eq!(Err(Error::NotRepresentable), result);
+    assert_eq!(Err(Error::OutOfRange), result);
 }
 
 #[test]
@@ -400,15 +400,15 @@ fn add_frequency_overflow() {
 
 #[test]
 fn add_percentage() {
-    let mut buffer = [0u8; LPP_PERCRENTAGE_SIZE * 2];
+    let mut buffer = [0u8; LPP_PERCENTAGE_SIZE * 2];
     let mut lpp = CayenneLPP::new(&mut buffer);
 
     lpp.add_percentage(3, 12).unwrap();
     lpp.add_percentage(5, 34).unwrap();
 
     let expected_bytes = [
-        3, LPP_PERCRENTAGE, 12,
-        5, LPP_PERCRENTAGE, 34
+        3, LPP_PERCENTAGE, 12,
+        5, LPP_PERCENTAGE, 34
     ];
 
     assert_eq!(expected_bytes, buffer);
@@ -416,7 +416,7 @@ fn add_percentage() {
 
 #[test]
 fn add_percentage_overflow() {
-    let mut buffer = [0u8; LPP_PERCRENTAGE_SIZE + 2];
+    let mut buffer = [0u8; LPP_PERCENTAGE_SIZE + 2];
     let mut lpp = CayenneLPP::new(&mut buffer);
 
     lpp.add_percentage(3, 12).unwrap();
@@ -645,8 +645,8 @@ fn add_switch() {
     let mut buffer = [0u8; LPP_SWITCH_SIZE * 2];
     let mut lpp = CayenneLPP::new(&mut buffer);
 
-    lpp.add_switch(3, 0).unwrap();
-    lpp.add_switch(5, 1).unwrap();
+    lpp.add_switch(3, false).unwrap();
+    lpp.add_switch(5, true).unwrap();
 
     let expected_bytes = [
         3, LPP_SWITCH, 0,
@@ -661,8 +661,8 @@ fn add_switch_overflow() {
     let mut buffer = [0u8; LPP_SWITCH_SIZE + 1];
     let mut lpp = CayenneLPP::new(&mut buffer);
 
-    lpp.add_switch(3, 0).unwrap();
-    let result = lpp.add_switch(5, 1);
+    lpp.add_switch(3, false).unwrap();
+    let result = lpp.add_switch(5, true);
 
     assert_eq!(Err(Error::InsufficientMemory), result);
 }
