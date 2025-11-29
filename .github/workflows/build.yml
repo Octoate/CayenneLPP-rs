@@ -42,6 +42,7 @@ jobs:
         run: |
           cargo check
           cargo test --all --verbose
+          cargo docs-rs
         env:
           CARGO_INCREMENTAL: '0'
           RUSTFLAGS: '-Cinstrument-coverage'
