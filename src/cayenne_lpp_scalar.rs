@@ -80,7 +80,7 @@ pub enum CayenneLPPValue {
 }
 
 /// Single value parsed from a CayenneLPP data structure,
-/// invluding the enumeration of its value and it's channel.
+/// including the enumeration of its value and it's channel.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct CayenneLPPScalar {
     /// The channel value parsed from a data structure
