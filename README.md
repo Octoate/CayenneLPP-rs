@@ -22,18 +22,26 @@ formatter of the TTN can be found [here](https://www.thethingsindustries.com/doc
 
 The original C++ version of Cayenne LPP can be found [here](https://github.com/myDevicesIoT/CayenneLPP).
 
+## Cayenne LPP additional types
+Since the original Cayenne LPP API only supports the following data types, this crate also provides additional data types
+for other sensor data types. It is compatible to the types that are defined in the 
+[ElectronicCats](https://github.com/ElectronicCats/CayenneLPP) implementation of the Cayenne LPP API.
+
+***NOTE:*** The additional data types are not compatible to the original Cayenne LPP API and are not recognized by e.g. the
+payload formatter of the TTN console.
+
 ## Example
 
 The following example will show how to add two data types, one digital input value and one temperature value, to the
-Cayenne LPP payload. Since there is no memory allocator available ("no_std"), the API needs a buffer, that will be
-filled by it.  
-To create a buffer with the exact size of the payload, use the size constants of the different data types, that are
-provided by the API. To add two digital inputs, just multiply the size variable by 2 and use this size for the buffer
+Cayenne LPP payload. Since there is no memory allocator available ("no_std"), the API needs a buffer that it will 
+fill.  
+To create a buffer with the exact size of the payload, use the size constants of the different data types that are
+provided by the API. To add two digital inputs, multiply the size variable by 2 and use this size for the buffer
 initialization. The buffer needs to be mutable since it will be modified by the API. Note that it is not necessary to
 exactly define the buffer size, it just needs to be greater or equal to the size of the data types that are added to it.
 Therefore, it is possible to reuse the buffer with different data types. The CayenneLPP::reset() function can be used
 to reset the structure.  
-After the buffer initialization, just create a new instance of the CayenneLPP API and add the data types to the payload
+After the buffer initialization, create a new instance of the CayenneLPP API and add the data types to the payload
 with the available API functions.  
 After adding all the values, a slice to the buffer can be retrieved by calling the CayenneLPP::payload_slice() function.
 The slice can be then used to send the data via an external API.
@@ -68,9 +76,9 @@ fn main() {
 
 ## Future development
 
-The API in its current state should be pretty stable to use. Currently it only supports ```no_std```, but it would be
+The API in its current state should be pretty stable to use. Currently, it only supports ```no_std```, but it would be
 possible to support an easier to use API for ```std``` as well.  
-However, if you have any remarks or want to add some functionality feel free to start a discussion or send a PR, but do
+However, if you have any remarks or want to add some functionality, feel free to start a discussion or send a PR, but do
 not forget to add unit tests and / or integration tests, if you want that it gets merged into the repo.
 
 # License
