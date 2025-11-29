@@ -233,7 +233,21 @@ fn add_relative_humidity_ok() {
     lpp.add_relative_humidity(2, 100.0).unwrap();
     lpp.add_relative_humidity(3, 65.4).unwrap();
 
-    let expected_bytes: [u8; 6] = [0x02, LPP_RELATIVE_HUMIDITY, 0xC8, 0x03, LPP_RELATIVE_HUMIDITY, 0x82];
+    let expected_bytes: [u8; 6] = [0x02, LPP_RELATIVE_HUMIDITY, 0xC8, 0x03, LPP_RELATIVE_HUMIDITY, 0x83];
+    assert_eq!(expected_bytes, buffer);
+}
+
+#[test]
+fn add_relative_humidity_negatives() {
+    // While it may seem nonsense to have negative relative humidities, it's tecnically
+    // possible with the code, so we should make sure that the math is at least right.
+    let mut buffer: [u8; 2 * LPP_RELATIVE_HUMIDITY_SIZE] = [0; 2 * LPP_RELATIVE_HUMIDITY_SIZE];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    lpp.add_relative_humidity(2, -12.34).unwrap();
+    lpp.add_relative_humidity(3, -34.56).unwrap();
+
+    let expected_bytes: [u8; 6] = [0x02, LPP_RELATIVE_HUMIDITY, 0x00, 0x03, LPP_RELATIVE_HUMIDITY, 0x00];
     assert_eq!(expected_bytes, buffer);
 }
 
