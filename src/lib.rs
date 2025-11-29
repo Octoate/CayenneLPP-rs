@@ -92,7 +92,7 @@ pub const LPP_COLOR: u8 =               135;     // 1 byte per RGB color
 /// Data type of GPS value
 pub const LPP_GPS: u8 =                 136;     // 3 byte lon/lat 0.0001 °, 3 bytes alt 0.01 meter
 
-/// Data type of a switch value
+/// Data type of switch value
 pub const LPP_SWITCH: u8 =              142;     // 1 byte 0/1
 
 // Data ID + Data Type + Data Size
@@ -246,7 +246,7 @@ impl<'a> CayenneLPP<'a> {
             CayenneLPPValue::Gyrometer(x, y, z) => self.add_gyrometer(channel, x, y, z),
             CayenneLPPValue::Color(r, g, b)        => self.add_color(channel, r, g, b),
             CayenneLPPValue::GPS(lat, lon, alt) => self.add_gps(channel, lat, lon, alt),
-            CayenneLPPValue::Switch(s) => self.add_switch(channel, if s { 1 } else { 0 }),
+            CayenneLPPValue::Switch(s) => self.add_switch(channel, s),
         }
     }
 
@@ -791,7 +791,7 @@ pub enum CayenneLPPValue {
     Concentration(u16),
 
     /// Data type of a power value
-    Power(i16),
+    Power(u16),
 
     /// Data type of a distance value
     Distance(u32),
@@ -988,7 +988,7 @@ impl<'a> Iterator for CayenneLPPIntoIterator<'a> {
             },
 
             LPP_PRESENCE => {
-                let remaining_length = LPP_PERCRENTAGE_SIZE - 2;
+                let remaining_length = LPP_PERCENTAGE_SIZE - 2;
                 if buffer.len() < self.index + remaining_length { return None }
 
                 Some(CayenneLPPScalar {
@@ -1084,8 +1084,8 @@ impl<'a> Iterator for CayenneLPPIntoIterator<'a> {
                 })
             },
 
-            LPP_PERCRENTAGE => {
-                let remaining_length = LPP_PERCRENTAGE_SIZE - 2;
+            LPP_PERCENTAGE => {
+                let remaining_length = LPP_PERCENTAGE_SIZE - 2;
                 if buffer.len() < self.index + remaining_length { return None }
 
                 Some(CayenneLPPScalar {
@@ -1112,7 +1112,7 @@ impl<'a> Iterator for CayenneLPPIntoIterator<'a> {
 
                 Some(CayenneLPPScalar {
                     channel,
-                    value: CayenneLPPValue::Power(self.get_i16())
+                    value: CayenneLPPValue::Power(self.get_u16())
                 })
             },
 

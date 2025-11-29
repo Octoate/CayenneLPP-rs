@@ -119,7 +119,7 @@ fn test_scalar_and_iter() {
         LPP_VOLTAGE_SIZE +
         LPP_CURRENT_SIZE +
         LPP_FREQUENCY_SIZE +
-        LPP_PERCRENTAGE_SIZE +
+        LPP_PERCENTAGE_SIZE +
         LPP_ALTITUDE_SIZE +
         LPP_POWER_SIZE +
         LPP_DISTANCE_SIZE +
@@ -136,9 +136,9 @@ fn test_scalar_and_iter() {
 
     let mut lpp = CayenneLPP::new(&mut buffer);
 
-    // Make an array of all the possible values of a scalar
+    // Make an array of all possible values of a scalar
     // This will ensure that the code to add a scalar to the
-    // data structure is corrrect, and it'll also be used to
+    // data structure is correct, and it'll also be used to
     // verify that we can correctly pull them back out via
     // the iterator;
     let scalars = [
