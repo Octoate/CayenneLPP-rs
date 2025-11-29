@@ -20,7 +20,7 @@ jobs:
         with:
           toolchain: stable
           override: true
-          components: clippy, llvm-tools-preview
+          components: clippy, docs-rs, llvm-tools-preview
 
       - name: Toolchain info
         run: |
