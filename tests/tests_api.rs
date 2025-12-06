@@ -187,6 +187,20 @@ fn test_scalar_and_iter() {
 
     assert_eq!(count, scalars.len());
 
+    // Do it again, but this time, use the failable iterator
+    let mut lpp = CayenneLPP::new(&mut buffer);
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+    let mut count = 0;
+    for (example, result) in scalars.into_iter().zip(lpp.into_iter()) {
+        assert_eq!(Ok(example), result);
+        count += 1;
+    }
+
+    assert_eq!(count, scalars.len());
+
+
 }
 
 #[test]
@@ -223,7 +237,7 @@ fn test_iter_buffer_underrun() {
 }
 
 #[test]
-fn test_iter_value_out_of_bounds() {
+fn test_iter_value_out_of_bounds_lat() {
     // prepare an array that will fit the whole payload plus extra bytes
     let mut buffer = [0u8;
         LPP_GPS_SIZE
@@ -235,6 +249,28 @@ fn test_iter_value_out_of_bounds() {
         0x01, LPP_GPS,    // Channel and type
         0x0F, 0x42, 0x40, // 100 degrees north latitude (impossible)
         0xF2, 0x96, 0x0A, // -87.9094 degrees (87.9 west)
+        0x00, 0x03, 0xE8] // 10 meters altitude
+    );
+
+    let lpp = CayenneLPP::new(&mut buffer);
+
+    let mut iter = lpp.into_iter();
+    assert_eq!(iter.next(), Some(Err(Error::OutOfRange)));
+}
+
+#[test]
+fn test_iter_value_out_of_bounds_lon() {
+    // prepare an array that will fit the whole payload plus extra bytes
+    let mut buffer = [0u8;
+        LPP_GPS_SIZE
+    ];
+
+    // We can't make the packet the normal way, because we're
+    // prevented from making illegal packets by the API.
+    buffer.copy_from_slice(&[
+        0x01, LPP_GPS,    // Channel and type
+        0xF2, 0x96, 0x0A, // -87.9094 degrees (87.9 south)
+        0x1C, 0xFD, 0xE0, // 190 degrees east latitude (impossible)
         0x00, 0x03, 0xE8] // 10 meters altitude
     );
 
@@ -257,4 +293,68 @@ fn test_iter_unhandled_type() {
     
     let mut iter = lpp.into_iter();
     assert_eq!(iter.next(), Some(Err(Error::UnhandledType(4))));
+}
+
+#[test]
+fn test_iter_termination_failable() {
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_ANALOG_INPUT_SIZE
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::AnalogInput(12.7) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+      
+    let mut iter = lpp.into_iter();
+
+    // Ignore the three scalars that are in the buffer
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+
+    // Expect a None now
+    assert_eq!(iter.next(), None);
+
+}
+
+#[test]
+fn test_iter_termination_infailable() {
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_ANALOG_INPUT_SIZE
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::AnalogInput(12.7) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+      
+    let mut iter = lpp.into_infailable_iter();
+
+    // Ignore the three scalars that are in the buffer
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+
+    // Expect a None now
+    assert_eq!(iter.next(), None);
+
 }
