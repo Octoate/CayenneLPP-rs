@@ -440,7 +440,7 @@ pub struct CayenneLPPIterator<'a> {
 
 impl<'a> CayenneLPP<'a> {
     /// Create an infallable iterator.  This iterator flattens
-    /// the result from a Option<Result<CayenneLPPScalar>> into
+    /// the result from a `Option<Result<CayenneLPPScalar>>` into
     /// just an Option.  This is useful if you want to just stop
     /// processing the byte stream when the first error is encountered.
     pub fn into_infailable_iter(self) -> CayenneLPPIterator<'a> {
