@@ -1,4 +1,5 @@
 use cayenne_lpp::*;
+use crate::error::Error;
 
 #[test]
 fn test_all_possible_payloads() {
@@ -103,7 +104,6 @@ fn test_all_possible_payloads() {
 #[test]
 fn test_scalar_and_iter() {
     // prepare an array that will fit the whole payload
-    const ADDITIONAL_BYTES: usize = 2;
     let mut buffer = [0u8;
         LPP_DIGITAL_INPUT_SIZE +
         LPP_DIGITAL_OUTPUT_SIZE +
@@ -130,8 +130,7 @@ fn test_scalar_and_iter() {
         LPP_CONCENTRATION_SIZE +
         LPP_COLOR_SIZE +
         LPP_GPS_SIZE +
-        LPP_SWITCH_SIZE +
-        ADDITIONAL_BYTES
+        LPP_SWITCH_SIZE
     ];
 
     let mut lpp = CayenneLPP::new(&mut buffer);
@@ -181,11 +180,81 @@ fn test_scalar_and_iter() {
     // how many we process.  If it's less than the size of the
     // example array we know we terminated early.
     let mut count = 0;
-    for (example, result) in scalars.into_iter().zip(lpp.into_iter()) {
+    for (example, result) in scalars.into_iter().zip(lpp.into_infailable_iter()) {
         assert_eq!(example, result);
         count += 1;
     }
 
     assert_eq!(count, scalars.len());
 
+}
+
+#[test]
+fn test_iter_buffer_underrun() {
+    // prepare an array that will fit the whole payload plus extra bytes
+    const ADDITIONAL_BYTES: usize = 2;
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        ADDITIONAL_BYTES
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+   
+    // As is, this will look like a byte array with two complete
+    // packets and one dangling packet for a digital input on
+    // channel zero, but it won't have enough bytes to unpack the
+    // value.  So, it'll look like a buffer underrun.
+    let mut iter = lpp.into_iter();
+    let mut _scalar = iter.next();
+    _scalar = iter.next();
+
+    // the next call to next should be Err(Error:BufferUnderrun)
+    assert_eq!(iter.next(), Some(Err(Error::BufferUnderrun)));
+}
+
+#[test]
+fn test_iter_value_out_of_bounds() {
+    // prepare an array that will fit the whole payload plus extra bytes
+    let mut buffer = [0u8;
+        LPP_GPS_SIZE
+    ];
+
+    // We can't make the packet the normal way, because we're
+    // prevented from making illegal packets by the API.
+    buffer.copy_from_slice(&[
+        0x01, LPP_GPS,    // Channel and type
+        0x0F, 0x42, 0x40, // 100 degrees north latitude (impossible)
+        0xF2, 0x96, 0x0A, // -87.9094 degrees (87.9 west)
+        0x00, 0x03, 0xE8] // 10 meters altitude
+    );
+
+    let lpp = CayenneLPP::new(&mut buffer);
+
+    let mut iter = lpp.into_iter();
+    assert_eq!(iter.next(), Some(Err(Error::OutOfRange)));
+}
+
+#[test]
+fn test_iter_unhandled_type() {
+    // Set a type code that's illegal
+    // we have to be a little sneaky how we initialize the lpp 
+    // because the API prevents us from creating illegal packets.
+    let mut buffer = [4u8;
+        LPP_DIGITAL_INPUT_SIZE
+    ];
+
+    let lpp = CayenneLPP::new(&mut buffer);
+    
+    let mut iter = lpp.into_iter();
+    assert_eq!(iter.next(), Some(Err(Error::UnhandledType(4))));
 }
