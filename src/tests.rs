@@ -655,6 +655,17 @@ fn add_gps_overflow() {
 }
 
 #[test]
+fn add_gps_bounds() {
+    let mut buffer: [u8; LPP_GPS_SIZE + 2] = [0; LPP_GPS_SIZE + 2];
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    assert_eq!(lpp.add_gps(3,  100.0,   34.2, 56.1), Err(Error::OutOfRange));
+    assert_eq!(lpp.add_gps(3, -100.0,   34.2, 56.1), Err(Error::OutOfRange));
+    assert_eq!(lpp.add_gps(3,   45.0, -190.0, 56.1), Err(Error::OutOfRange));
+    assert_eq!(lpp.add_gps(3,   45.0,  190.0, 56.1), Err(Error::OutOfRange));
+}
+
+#[test]
 fn add_switch() {
     let mut buffer = [0u8; LPP_SWITCH_SIZE * 2];
     let mut lpp = CayenneLPP::new(&mut buffer);

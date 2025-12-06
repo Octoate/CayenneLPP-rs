@@ -17,12 +17,15 @@ trivial_numeric_casts)]
 pub use crate::constants::*;
 pub use crate::cayenne_lpp_scalar::{CayenneLPPScalar, CayenneLPPValue};
 use crate::error::Error;
-use crate::cayenne_lpp_into_iterator::CayenneLPPIntoIterator;
+use crate::cayenne_lpp_into_iterator::CayenneLPPIntoFailableIterator;
 
 pub(crate) mod constants;
 pub(crate) mod cayenne_lpp_scalar;
 mod cayenne_lpp_into_iterator;
-mod error;
+
+/// Errors that may occur in the module
+pub mod error;
+
 #[cfg(test)]
 mod tests;
 
@@ -512,6 +515,15 @@ impl<'a> CayenneLPP<'a> {
             return Err(Error::InsufficientMemory);
         }
 
+        // Do bounds-checking on the GPS values
+        if latitude > 90.0 || latitude < -90.0 {
+            return Err(Error::OutOfRange);
+        }
+
+        if longitude > 180.0 || longitude < -180.0 {
+            return Err(Error::OutOfRange);
+        }
+
         // prepare GPS values (3 bytes each)
         let vx: i32 = (latitude * 10000.0) as i32;
         let vy: i32 = (longitude * 10000.0) as i32;
@@ -580,13 +592,14 @@ impl<'a> CayenneLPP<'a> {
 }
 
 impl<'a> IntoIterator for CayenneLPP<'a> {
-    type Item = CayenneLPPScalar;
-    type IntoIter = CayenneLPPIntoIterator<'a>;
+    type Item = Result<CayenneLPPScalar, Error>;
+    type IntoIter = CayenneLPPIntoFailableIterator<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        CayenneLPPIntoIterator {
+        CayenneLPPIntoFailableIterator {
             lpp: self,
             index: 0
         }
     }
 }
+
