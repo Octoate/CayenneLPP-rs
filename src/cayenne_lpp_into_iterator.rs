@@ -1,10 +1,10 @@
-use crate::CayenneLPP;
 use crate::cayenne_lpp_scalar::{CayenneLPPScalar, CayenneLPPValue};
 use crate::constants::*;
 use crate::error::Error;
+use crate::CayenneLPP;
 
 /// Iterator over the CayenneLPP Scalars parsed from a data structure
-/// This version will return Option<Result<CayenneLPPScalar>>.  Some(Err(...))
+/// This version will return Option<Result<CayenneLPPScalar>>. Some(Err(...))
 /// will be returned when there was an error unpacking a CayenneLPP scalar.
 /// the most likely causes of this error would be unhandled type codes,
 /// out-of-bounds results, and stray bytes at the end of the bytestream.
@@ -22,7 +22,7 @@ impl<'a> CayenneLPPIntoFailableIterator<'a> {
     // All of these functions are unsafe in the sense that they
     // rely on the size bounds being already checked.
     fn get_u32(&mut self) -> u32 {
-        let byte_1 = self.lpp.buffer[self.index + 0] as u32;
+        let byte_1 = self.lpp.buffer[self.index] as u32;
         let byte_2 = self.lpp.buffer[self.index + 1] as u32;
         let byte_3 = self.lpp.buffer[self.index + 2] as u32;
         let byte_4 = self.lpp.buffer[self.index + 3] as u32;
@@ -32,7 +32,7 @@ impl<'a> CayenneLPPIntoFailableIterator<'a> {
         retval += byte_1 << 24;
         retval += byte_2 << 16;
         retval += byte_3 <<  8;
-        retval += byte_4 <<  0;
+        retval += byte_4;
 
         retval
     }
@@ -40,7 +40,7 @@ impl<'a> CayenneLPPIntoFailableIterator<'a> {
     /// Gets three bytes out of the byte array and coerces it into
     /// a 24-bit signed integer.  This is only used by the GPS packet.
     fn get_i24(&mut self) -> i32 {
-        let byte_1 = self.lpp.buffer[self.index + 0] as i32;
+        let byte_1 = self.lpp.buffer[self.index] as i32;
         let byte_2 = self.lpp.buffer[self.index + 1] as i32;
         let byte_3 = self.lpp.buffer[self.index + 2] as i32;
         self.index += 3;
@@ -48,7 +48,7 @@ impl<'a> CayenneLPPIntoFailableIterator<'a> {
         let mut retval: i32 = 0;
         retval += byte_1 << 16;
         retval += byte_2 <<  8;
-        retval += byte_3 <<  0;
+        retval += byte_3;
 
         // Perform sign extension.  Because we're coming from a 24-bit
         // signed integer, and it's going into a 32-bit type, we need
@@ -62,13 +62,13 @@ impl<'a> CayenneLPPIntoFailableIterator<'a> {
     }
 
     fn get_u16(&mut self) -> u16 {
-        let byte_1 = self.lpp.buffer[self.index + 0] as u16;
+        let byte_1 = self.lpp.buffer[self.index] as u16;
         let byte_2 = self.lpp.buffer[self.index + 1] as u16;
         self.index += 2;
 
         let mut retval: u16 = 0;
         retval += byte_1 << 8;
-        retval += byte_2 << 0;
+        retval += byte_2;
 
         retval
     }
@@ -376,12 +376,13 @@ impl<'a> Iterator for CayenneLPPIntoFailableIterator<'a> {
 
                 // Do some basic sanity bounds checking.
                 // The maximum latitude is +/- 90 degrees N/S
-                if lat > 90.0 || lat < -90.0 {
+
+                if !(-90.0..=90.0).contains(&lat) {
                     return Some(Err(Error::OutOfRange));
                 }
 
                 // Same for longitude, but this time it's +/- 180.
-                if lon > 180.0 || lon < -180.0 {
+                if !(-180.0..=180.0).contains(&lon) {
                     return Some(Err(Error::OutOfRange));
                 }
 

@@ -14,10 +14,10 @@ trivial_numeric_casts)]
 //! [Cayenne LPP]: https://docs.mydevices.com/docs/lorawan/cayenne-lpp
 //! [here]: https://github.com/myDevicesIoT/CayenneLPP
 
-pub use crate::constants::*;
-pub use crate::cayenne_lpp_scalar::{CayenneLPPScalar, CayenneLPPValue};
-use crate::error::Error;
 use crate::cayenne_lpp_into_iterator::CayenneLPPIntoFailableIterator;
+pub use crate::cayenne_lpp_scalar::{CayenneLPPScalar, CayenneLPPValue};
+pub use crate::constants::*;
+use crate::error::Error;
 
 pub(crate) mod constants;
 pub(crate) mod cayenne_lpp_scalar;
@@ -252,7 +252,7 @@ impl<'a> CayenneLPP<'a> {
             (s, f) if s < 0.0 && f <= -0.5 => {
                 s - 1.0
             },
-            // Should never, happen, just clamp if it does...
+            // Should never happen, just clamp if it does...
             (s, _) => {
                 s
             }
@@ -382,7 +382,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    /// Adds the payload for a altitude to the Cayenne LPP data structure (in meters)
+    /// Adds the payload for an altitude to the Cayenne LPP data structure (in meters)
     pub fn add_altitude(&mut self, channel: u8, altitude: i16) -> Result<(), Error> {
         if self.index + LPP_ALTITUDE_SIZE > self.buffer.len() {
             return Err(Error::InsufficientMemory);
@@ -431,7 +431,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    /// Adds the payload for a energy to the Cayenne LPP data structure. The units are in single Wh
+    /// Adds the payload for energy to the Cayenne LPP data structure. The units are in single Wh
     pub fn add_energy(&mut self, channel: u8, energy: u32) -> Result<(), Error> {
         if self.index + LPP_ENERGY_SIZE > self.buffer.len() {
             return Err(Error::InsufficientMemory);
@@ -516,11 +516,11 @@ impl<'a> CayenneLPP<'a> {
         }
 
         // Do bounds-checking on the GPS values
-        if latitude > 90.0 || latitude < -90.0 {
+        if !(-90.0..=90.0).contains(&latitude) {
             return Err(Error::OutOfRange);
         }
 
-        if longitude > 180.0 || longitude < -180.0 {
+        if !(-180.0..= 180.0).contains(&longitude) {
             return Err(Error::OutOfRange);
         }
 
@@ -574,7 +574,7 @@ impl<'a> CayenneLPP<'a> {
         Ok(())
     }
 
-    /// Adds the payload for color to the Cayenne LPP data structure. It's a byte per color channel
+    /// Adds the payload for color to the Cayenne LPP data structure. It's a byte per-color channel
     pub fn add_color(&mut self, channel: u8, red: u8, green: u8, blue: u8) -> Result<(), Error> {
         if self.index + LPP_COLOR_SIZE > self.buffer.len() {
             return Err(Error::InsufficientMemory);

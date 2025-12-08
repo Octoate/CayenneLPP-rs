@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use cayenne_lpp::*;
 use crate::error::Error;
 
@@ -201,8 +199,6 @@ fn test_scalar_and_iter() {
     }
 
     assert_eq!(count, scalars.len());
-
-
 }
 
 #[test]
@@ -320,13 +316,12 @@ fn test_iter_termination_failable() {
     let mut iter = lpp.into_iter();
 
     // Ignore the three scalars that are in the buffer
-    let mut _scalar = iter.next().unwrap();
-    let mut _scalar = iter.next().unwrap();
-    let mut _scalar = iter.next().unwrap();
+    let _scalar = iter.next().unwrap();
+    let _scalar = iter.next().unwrap();
+    let _scalar = iter.next().unwrap();
 
     // Expect a None now
     assert_eq!(iter.next(), None);
-
 }
 
 #[test]
@@ -352,13 +347,12 @@ fn test_iter_termination_infailable() {
     let mut iter = lpp.into_infailable_iter();
 
     // Ignore the three scalars that are in the buffer
-    let mut _scalar = iter.next().unwrap();
-    let mut _scalar = iter.next().unwrap();
-    let mut _scalar = iter.next().unwrap();
+    let _scalar = iter.next().unwrap();
+    let _scalar = iter.next().unwrap();
+    let _scalar = iter.next().unwrap();
 
     // Expect a None now
     assert_eq!(iter.next(), None);
-
 }
 
 #[test]
@@ -510,7 +504,6 @@ fn test_scalar_fmt_debug() {
     for scalar in scalars.into_iter() {
         lpp.add_scalar(&scalar).unwrap();
     }
-
 
     // Now, we should have all the data in the lpp structure;
     // well iterate through the scalars zip'ed with the sample
