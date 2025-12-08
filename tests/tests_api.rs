@@ -1,4 +1,7 @@
+use std::fmt::Debug;
+
 use cayenne_lpp::*;
+use crate::error::Error;
 
 #[test]
 fn test_all_possible_payloads() {
@@ -103,7 +106,6 @@ fn test_all_possible_payloads() {
 #[test]
 fn test_scalar_and_iter() {
     // prepare an array that will fit the whole payload
-    const ADDITIONAL_BYTES: usize = 2;
     let mut buffer = [0u8;
         LPP_DIGITAL_INPUT_SIZE +
         LPP_DIGITAL_OUTPUT_SIZE +
@@ -130,8 +132,7 @@ fn test_scalar_and_iter() {
         LPP_CONCENTRATION_SIZE +
         LPP_COLOR_SIZE +
         LPP_GPS_SIZE +
-        LPP_SWITCH_SIZE +
-        ADDITIONAL_BYTES
+        LPP_SWITCH_SIZE
     ];
 
     let mut lpp = CayenneLPP::new(&mut buffer);
@@ -181,11 +182,345 @@ fn test_scalar_and_iter() {
     // how many we process.  If it's less than the size of the
     // example array we know we terminated early.
     let mut count = 0;
-    for (example, result) in scalars.into_iter().zip(lpp.into_iter()) {
+    for (example, result) in scalars.into_iter().zip(lpp.into_infailable_iter()) {
         assert_eq!(example, result);
         count += 1;
     }
 
     assert_eq!(count, scalars.len());
 
+    // Do it again, but this time, use the failable iterator
+    let mut lpp = CayenneLPP::new(&mut buffer);
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+    let mut count = 0;
+    for (example, result) in scalars.into_iter().zip(lpp.into_iter()) {
+        assert_eq!(Ok(example), result);
+        count += 1;
+    }
+
+    assert_eq!(count, scalars.len());
+
+
+}
+
+#[test]
+fn test_iter_buffer_underrun() {
+    // prepare an array that will fit the whole payload plus extra bytes
+    const ADDITIONAL_BYTES: usize = 2;
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        ADDITIONAL_BYTES
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+   
+    // As is, this will look like a byte array with two complete
+    // packets and one dangling packet for a digital input on
+    // channel zero, but it won't have enough bytes to unpack the
+    // value.  So, it'll look like a buffer underrun.
+    let mut iter = lpp.into_iter();
+    let mut _scalar = iter.next();
+    _scalar = iter.next();
+
+    // the next call to next should be Err(Error:BufferUnderrun)
+    assert_eq!(iter.next(), Some(Err(Error::BufferUnderrun)));
+}
+
+#[test]
+fn test_iter_value_out_of_bounds_lat() {
+    // prepare an array that will fit the whole payload plus extra bytes
+    let mut buffer = [0u8;
+        LPP_GPS_SIZE
+    ];
+
+    // We can't make the packet the normal way, because we're
+    // prevented from making illegal packets by the API.
+    buffer.copy_from_slice(&[
+        0x01, LPP_GPS,    // Channel and type
+        0x0F, 0x42, 0x40, // 100 degrees north latitude (impossible)
+        0xF2, 0x96, 0x0A, // -87.9094 degrees (87.9 west)
+        0x00, 0x03, 0xE8] // 10 meters altitude
+    );
+
+    let lpp = CayenneLPP::new(&mut buffer);
+
+    let mut iter = lpp.into_iter();
+    assert_eq!(iter.next(), Some(Err(Error::OutOfRange)));
+}
+
+#[test]
+fn test_iter_value_out_of_bounds_lon() {
+    // prepare an array that will fit the whole payload plus extra bytes
+    let mut buffer = [0u8;
+        LPP_GPS_SIZE
+    ];
+
+    // We can't make the packet the normal way, because we're
+    // prevented from making illegal packets by the API.
+    buffer.copy_from_slice(&[
+        0x01, LPP_GPS,    // Channel and type
+        0xF2, 0x96, 0x0A, // -87.9094 degrees (87.9 south)
+        0x1C, 0xFD, 0xE0, // 190 degrees east latitude (impossible)
+        0x00, 0x03, 0xE8] // 10 meters altitude
+    );
+
+    let lpp = CayenneLPP::new(&mut buffer);
+
+    let mut iter = lpp.into_iter();
+    assert_eq!(iter.next(), Some(Err(Error::OutOfRange)));
+}
+
+#[test]
+fn test_iter_unhandled_type() {
+    // Set a type code that's illegal
+    // we have to be a little sneaky how we initialize the lpp 
+    // because the API prevents us from creating illegal packets.
+    let mut buffer = [4u8;
+        LPP_DIGITAL_INPUT_SIZE
+    ];
+
+    let lpp = CayenneLPP::new(&mut buffer);
+    
+    let mut iter = lpp.into_iter();
+    assert_eq!(iter.next(), Some(Err(Error::UnhandledType(4))));
+}
+
+#[test]
+fn test_iter_termination_failable() {
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_ANALOG_INPUT_SIZE
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::AnalogInput(12.7) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+      
+    let mut iter = lpp.into_iter();
+
+    // Ignore the three scalars that are in the buffer
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+
+    // Expect a None now
+    assert_eq!(iter.next(), None);
+
+}
+
+#[test]
+fn test_iter_termination_infailable() {
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_ANALOG_INPUT_SIZE
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::AnalogInput(12.7) },
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+      
+    let mut iter = lpp.into_infailable_iter();
+
+    // Ignore the three scalars that are in the buffer
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+    let mut _scalar = iter.next().unwrap();
+
+    // Expect a None now
+    assert_eq!(iter.next(), None);
+
+}
+
+#[test]
+fn test_scalar_fmt_debug() {
+    use core::fmt::Write;
+
+    struct StrBuffer(usize, [u8; 128]);
+
+    impl core::fmt::Debug for StrBuffer {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.debug_tuple("StrBuffer").field(&self.0).field(&self.1).finish()?;
+            f.write_str(": \"")?;
+            f.write_str(str::from_utf8(&self.1[..]).expect("Illegal string"))?;
+            f.write_str("\"")
+        }
+    }
+
+    impl PartialEq for StrBuffer {
+        fn eq(&self, other: &Self) -> bool {
+           self.0 == other.0 && self.1[..self.0] == other.1[..self.0]
+        }
+    }
+
+    impl Write for StrBuffer {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            let string_slice = s.as_bytes();
+            let new_len = self.0 + string_slice.len();
+            self.1[self.0..new_len].copy_from_slice(string_slice);
+            self.0 = new_len;
+
+            Ok(())
+        }
+    }
+
+    impl Default for StrBuffer {
+        fn default() -> Self {
+            Self(0, [0u8; 128])
+        }
+    }
+
+    impl From<&str> for StrBuffer {
+        fn from(s: &str) -> Self {
+            let string_slice = s.as_bytes();
+            let mut retval = Self::default();
+            retval.0 = string_slice.len();
+            retval.1[..retval.0].copy_from_slice(string_slice);    
+            retval        
+        }
+    }
+
+    // prepare an array that will fit the whole payload
+    let mut buffer = [0u8;
+        LPP_DIGITAL_INPUT_SIZE +
+        LPP_DIGITAL_OUTPUT_SIZE +
+        LPP_ANALOG_INPUT_SIZE +
+        LPP_ANALOG_OUTPUT_SIZE +
+        LPP_GENERIC_SENSOR_SIZE +
+        LPP_LUMINOSITY_SIZE +
+        LPP_PRESENCE_SIZE +
+        LPP_TEMPERATURE_SIZE +
+        LPP_RELATIVE_HUMIDITY_SIZE +
+        LPP_ACCELEROMETER_SIZE +
+        LPP_BAROMETRIC_PRESSURE_SIZE +
+        LPP_VOLTAGE_SIZE +
+        LPP_CURRENT_SIZE +
+        LPP_FREQUENCY_SIZE +
+        LPP_PERCENTAGE_SIZE +
+        LPP_ALTITUDE_SIZE +
+        LPP_CONCENTRATION_SIZE +
+        LPP_POWER_SIZE +
+        LPP_DISTANCE_SIZE +
+        LPP_ENERGY_SIZE +
+        LPP_DIRECTION_SIZE +
+        LPP_UNIXTIME_SIZE +
+        LPP_GYROMETER_SIZE +
+        LPP_CONCENTRATION_SIZE +
+        LPP_COLOR_SIZE +
+        LPP_GPS_SIZE +
+        LPP_SWITCH_SIZE
+    ];
+
+    let mut lpp = CayenneLPP::new(&mut buffer);
+
+    // Make an array of all possible values of a scalar
+    // This will ensure that the code to add a scalar to the
+    // data structure is correct, and it'll also be used to
+    // verify that we can correctly pull them back out via
+    // the iterator;
+    let scalars = [
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::DigitalInput(0x55) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::DigitalOutput(0xAA) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::AnalogInput(12.7) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::AnalogOutput(15.5) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::GenericSensor( 0x1234567) },
+        CayenneLPPScalar{ channel: 9, value: CayenneLPPValue::Luminosity(0x55AA) },
+        CayenneLPPScalar{ channel: 2, value: CayenneLPPValue::Presence(0xAA) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Temperature(25.5) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::RelativeHumidity(65.5) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Accelerometer(6.427, 3.129, -2.853) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::BarometricPressure(992.3) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Voltage(123.45) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Current(12.345) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Frequency(901_525_000) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Percentage(12) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Altitude(-1234) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Concentration(1234) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Power(1234) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Distance(123456789) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Energy(123456789) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Direction(123) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::UnixTime(123456789) },
+        CayenneLPPScalar{ channel: 6, value: CayenneLPPValue::Gyrometer(12.34, 56.78, 9.0) },
+        CayenneLPPScalar{ channel: 4, value: CayenneLPPValue::Color(0x12, 0x34, 0x56) },
+        CayenneLPPScalar{ channel: 1, value: CayenneLPPValue::GPS(42.3518, -87.9094, 10.0) },
+        CayenneLPPScalar{ channel: 3, value: CayenneLPPValue::Switch(true) },
+        CayenneLPPScalar{ channel: 5, value: CayenneLPPValue::Concentration(65000) },
+    ];
+
+    let debugs = [
+        "CayenneLPPScalar { channel: 3, value: DigitalInput(85) }",
+        "CayenneLPPScalar { channel: 5, value: DigitalOutput(170) }",
+        "CayenneLPPScalar { channel: 3, value: AnalogInput(12.7) }",
+        "CayenneLPPScalar { channel: 5, value: AnalogOutput(15.5) }",
+        "CayenneLPPScalar { channel: 3, value: GenericSensor(19088743) }",
+        "CayenneLPPScalar { channel: 9, value: Luminosity (lux) (21930) }",
+        "CayenneLPPScalar { channel: 2, value: Presence(170) }",
+        "CayenneLPPScalar { channel: 5, value: Degrees C(25.5) }",
+        "CayenneLPPScalar { channel: 3, value: RelativeHumidity(65.5) }",
+        "CayenneLPPScalar { channel: 3, value: Accelerometer { X: 6.427, Y: 3.129, Z: -2.853 } }",
+        "CayenneLPPScalar { channel: 5, value: BarometricPressure (hPa) (992.3) }",
+        "CayenneLPPScalar { channel: 3, value: Voltage(123.45) }",
+        "CayenneLPPScalar { channel: 5, value: Current (A) (12.345) }",
+        "CayenneLPPScalar { channel: 3, value: Frequency (hz) (901525000) }",
+        "CayenneLPPScalar { channel: 3, value: Percentage(12) }",
+        "CayenneLPPScalar { channel: 3, value: Altitude (M) (-1234) }",
+        "CayenneLPPScalar { channel: 5, value: Concentration (ppm) (1234) }",
+        "CayenneLPPScalar { channel: 5, value: Power (W) (1234) }",
+        "CayenneLPPScalar { channel: 3, value: Distance (M) (123456789) }",
+        "CayenneLPPScalar { channel: 5, value: Energy (Wh) (123456789) }",
+        "CayenneLPPScalar { channel: 3, value: Direction (deg) (123) }",
+        "CayenneLPPScalar { channel: 5, value: UnixTime(123456789) }",
+        "CayenneLPPScalar { channel: 6, value: Gyrometer { X: 12.34, Y: 56.78, Z: 9.0 } }",
+        "CayenneLPPScalar { channel: 4, value: Color { R: 18, G: 52, B: 86 } }",
+        "CayenneLPPScalar { channel: 1, value: GPS location { Lat: 42.3518, Lon: -87.9094, Alt: 10.0 } }",
+        "CayenneLPPScalar { channel: 3, value: Switch(true) }",
+        "CayenneLPPScalar { channel: 5, value: Concentration (ppm) (65000) }",
+    ];
+
+    for scalar in scalars.into_iter() {
+        lpp.add_scalar(&scalar).unwrap();
+    }
+
+
+    // Now, we should have all the data in the lpp structure;
+    // well iterate through the scalars zip'ed with the sample
+    // data and compare to make sure they match.  This will stop
+    // when one of the iters completes, so we'll keep track of
+    // how many we process.  If it's less than the size of the
+    // example array we know we terminated early.
+    for (example, result) in debugs.into_iter().zip(lpp.into_infailable_iter()) {
+        let mut formatted = StrBuffer::default();
+        write!(&mut formatted, "{:?}", result).expect("failed to format, buffer probably too small");
+        assert_eq!(formatted, <&str as Into<StrBuffer>>::into(example))
+    }
 }
